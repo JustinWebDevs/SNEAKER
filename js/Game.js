@@ -6,6 +6,7 @@ import { PowerUp } from './entities/PowerUp.js';
 import { Hunter } from './entities/enemies/Hunter.js';
 import { Turret } from './entities/enemies/Turret.js';
 import { Virus } from './entities/enemies/Virus.js';
+import { Blindness } from './entities/enemies/Blindness.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { ProgressionSystem } from './systems/ProgressionSystem.js';
 import { SkinSystem } from './systems/SkinSystem.js';
@@ -45,6 +46,7 @@ export class Game {
         this.food = null;
         this.powerups = [];
         this.enemies = [];
+        this.gunProjectiles = [];  // Visual projectiles for gun powerup
 
         // Timers
         this.lastTime = 0;
@@ -55,7 +57,14 @@ export class Game {
         this.controlsInverted = false;
         this.controlsInvertedTimer = 0;
 
+        // Mobile controls
+        this.isMobile = this.detectMobile();
+        this.joystickActive = false;
+        this.joystickStartPos = { x: 0, y: 0 };
+        this.joystickCurrentPos = { x: 0, y: 0 };
+
         this.setupEventListeners();
+        this.setupMobileControls();
         this.skinSystem.initializePreview('preview-canvas');
         this.updateUI();
         this.showMainMenu();
@@ -75,10 +84,15 @@ export class Game {
             }
             if (e.key === ' ') {
                 e.preventDefault();
-                this.input.dash = true;
+                // Only allow dash during gameplay, not in game over
+                if (this.state === 'playing') {
+                    this.input.dash = true;
+                }
             }
             if (e.key === 'Escape') {
-                this.pauseGame();
+                if (this.state === 'playing') {
+                    this.togglePause();
+                }
             }
         });
 
@@ -95,6 +109,112 @@ export class Game {
                 this.input.dash = false;
             }
         });
+
+        // Quick reset on spacebar during game over
+        window.addEventListener('keydown', (e) => {
+            if (this.state === 'gameover' && e.key === ' ') {
+                e.preventDefault();
+                this.startGame();
+            }
+        });
+    }
+
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            window.innerWidth <= 768;
+    }
+
+    setupMobileControls() {
+        if (!this.isMobile) {
+            // Hide mobile controls on desktop
+            const mobileControls = document.getElementById('mobile-controls');
+            if (mobileControls) {
+                mobileControls.style.display = 'none';
+            }
+            return;
+        }
+
+        // Show mobile controls
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) {
+            mobileControls.style.display = 'block';
+        }
+
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const dashButton = document.getElementById('dash-button');
+
+        if (joystickBase && joystickKnob) {
+            // Joystick touch events
+            joystickBase.addEventListener('touchstart', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                this.joystickActive = true;
+                const rect = joystickBase.getBoundingClientRect();
+                this.joystickStartPos = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+            });
+
+            joystickBase.addEventListener('touchmove', (e) => {
+                if (this.state !== 'playing' || !this.joystickActive) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const dx = touch.clientX - this.joystickStartPos.x;
+                const dy = touch.clientY - this.joystickStartPos.y;
+
+                // Limit knob movement to joystick base radius
+                const maxDistance = 35; // Half of joystick base radius
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const limitedDx = distance > maxDistance ? (dx / distance) * maxDistance : dx;
+                const limitedDy = distance > maxDistance ? (dy / distance) * maxDistance : dy;
+
+                // Update knob position
+                joystickKnob.style.transform = `translate(calc(-50% + ${limitedDx}px), calc(-50% + ${limitedDy}px))`;
+
+                // Determine direction (horizontal movement)
+                const left = this.controlsInverted;
+                if (Math.abs(limitedDx) > 10) {
+                    if (limitedDx < 0) {
+                        this.input[left ? 'right' : 'left'] = true;
+                        this.input[left ? 'left' : 'right'] = false;
+                    } else {
+                        this.input[left ? 'left' : 'right'] = true;
+                        this.input[left ? 'right' : 'left'] = false;
+                    }
+                } else {
+                    this.input.left = false;
+                    this.input.right = false;
+                }
+            });
+
+            joystickBase.addEventListener('touchend', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                this.joystickActive = false;
+                this.input.left = false;
+                this.input.right = false;
+                // Reset knob position
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+            });
+        }
+
+        if (dashButton) {
+            // Dash button touch events
+            dashButton.addEventListener('touchstart', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                this.input.dash = true;
+            });
+
+            dashButton.addEventListener('touchend', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                this.input.dash = false;
+            });
+        }
     }
 
     loadMaxLevel() {
@@ -228,10 +348,18 @@ export class Game {
                 this.controlsInverted = true;
                 this.controlsInvertedTimer = 3000;
                 enemy.lifetime = 0;
-                this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.virus, 20);
+                this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.adversePowerup, 20);
             }
 
-            // Hunter/Turret collision
+            // Blindness collision
+            if (enemy instanceof Blindness && enemy.checkCollision(this.snake)) {
+                this.snake.blindness.active = true;
+                this.snake.blindness.duration = enemy.duration;
+                enemy.lifetime = 0;
+                this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.adversePowerup, 20);
+            }
+
+            // Hunter/Turret projectile collision
             if ((enemy instanceof Hunter || enemy instanceof Turret) && enemy.checkCollision(this.snake)) {
                 if (!this.snake.isInvulnerable && !this.snake.powerups.ghost.active &&
                     !this.snake.powerups.shield.active) {
@@ -239,9 +367,28 @@ export class Game {
                 }
             }
 
-            // Body collision for hunters
+            // Turret body collision (turrets are solid unless in ghost mode)
+            if (enemy instanceof Turret && enemy.checkBodyCollision(this.snake)) {
+                this.gameOver();
+            }
+
+            // Ghost mode: damage turrets on collision
+            if (this.snake.powerups.ghost.active && enemy instanceof Turret) {
+                if (enemy.position.distance(this.snake.head) < enemy.radius + CONFIG.snake.segmentSize) {
+                    enemy.hp -= 1;
+                    if (enemy.hp <= 0) {
+                        this.enemiesKilled++;
+                    }
+                    this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.turret, 10);
+                }
+            }
+
+            // Body collision for hunters (but NOT in ghost mode)
             if (enemy instanceof Hunter && enemy.checkBodyCollision(this.snake)) {
-                this.snake.cut(0.2);
+                // Only reduce size if NOT in ghost mode
+                if (!this.snake.powerups.ghost.active) {
+                    this.snake.cut(0.2);
+                }
                 enemy.hp = 0;
                 this.enemiesKilled++;
                 this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.enemy, 15);
@@ -251,7 +398,8 @@ export class Game {
         // Turret shooting
         if (this.snake.powerups.turret.active) {
             const now = Date.now();
-            if (now - this.snake.powerups.turret.lastShot > 500) {
+            // Reduced fire rate to 1 second (1000ms)
+            if (now - this.snake.powerups.turret.lastShot > CONFIG.gun.fireRate) {
                 this.shootFromTail();
                 this.snake.powerups.turret.lastShot = now;
             }
@@ -261,6 +409,25 @@ export class Game {
 
         // Update particles
         this.particles.update(deltaTime);
+
+        // Update gun projectiles
+        this.gunProjectiles.forEach(proj => {
+            proj.position = proj.position.add(proj.velocity);
+            proj.lifetime -= deltaTime;
+
+            // Check collision with target
+            if (proj.target && proj.position.distance(proj.target.position) < proj.radius + 10) {
+                if (proj.target.hp !== undefined) {
+                    proj.target.hp -= CONFIG.gun.damage;
+                    if (proj.target.hp <= 0) {
+                        this.enemiesKilled++;
+                    }
+                }
+                this.particles.emit(proj.target.position.x, proj.target.position.y, CONFIG.colors.gunProjectile, 10);
+                proj.lifetime = 0;
+            }
+        });
+        this.gunProjectiles = this.gunProjectiles.filter(p => p.lifetime > 0);
 
         // Update inverted controls
         if (this.controlsInverted) {
@@ -295,9 +462,66 @@ export class Game {
 
         this.food.draw(this.ctx);
         this.powerups.forEach(p => p.draw(this.ctx));
-        this.enemies.forEach(e => e.draw(this.ctx));
+        this.enemies.forEach(e => {
+            e.draw(this.ctx);
+            // Draw HP bars for turrets
+            if (e instanceof Turret && e.hp > 0) {
+                this.ctx.save();
+                const barWidth = 30;
+                const barHeight = 4;
+                const x = e.position.x - barWidth / 2;
+                const y = e.position.y - e.radius - 10;
+
+                // Background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(x, y, barWidth, barHeight);
+
+                // HP segments
+                const segmentWidth = barWidth / 3;
+                for (let i = 0; i < e.hp; i++) {
+                    const gradient = this.ctx.createLinearGradient(x + i * segmentWidth, y, x + (i + 1) * segmentWidth, y);
+                    gradient.addColorStop(0, '#ffaa00');
+                    gradient.addColorStop(1, '#ff6600');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fillRect(x + i * segmentWidth + 1, y + 1, segmentWidth - 2, barHeight - 2);
+                }
+
+                // Border
+                this.ctx.strokeStyle = CONFIG.colors.turret;
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x, y, barWidth, barHeight);
+                this.ctx.restore();
+            }
+        });
+
+        // Draw gun projectiles
+        this.gunProjectiles.forEach(proj => {
+            this.ctx.save();
+            this.ctx.fillStyle = CONFIG.colors.gunProjectile;
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = CONFIG.colors.gunProjectile;
+            this.ctx.beginPath();
+            this.ctx.arc(proj.position.x, proj.position.y, proj.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        });
+
         this.snake.draw(this.ctx);
         this.particles.draw(this.ctx);
+
+        // Blindness vignette overlay (60% vision reduction)
+        if (this.snake && this.snake.blindness.active) {
+            const gradient = this.ctx.createRadialGradient(
+                this.snake.head.x, this.snake.head.y, 100,
+                this.snake.head.x, this.snake.head.y, CONFIG.canvas.width / 2
+            );
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');  // 60% darkness
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        }
     }
 
     eatFood() {
@@ -431,12 +655,17 @@ export class Game {
 
     spawnEnemy() {
         const rand = Math.random();
+        // Turrets only spawn from level 2+
+        const canSpawnTurrets = this.level >= CONFIG.game.minLevelForTurrets;
+
         if (rand < 0.6) {
             this.enemies.push(new Hunter());
-        } else if (rand < 0.85) {
+        } else if (rand < 0.85 && canSpawnTurrets) {
             this.enemies.push(new Turret());
-        } else {
+        } else if (rand < 0.92) {
             this.enemies.push(new Virus());
+        } else {
+            this.enemies.push(new Blindness());
         }
     }
 
@@ -448,7 +677,10 @@ export class Game {
         let nearest = null;
         let minDist = Infinity;
 
+        // Only target killable entities (exclude Virus and Blindness)
         this.enemies.forEach(enemy => {
+            if (enemy instanceof Virus || enemy instanceof Blindness) return;  // Skip adverse powerups
+
             const dist = tail.distance(enemy.position);
             if (dist < minDist && dist < 300) {
                 minDist = dist;
@@ -457,21 +689,16 @@ export class Game {
         });
 
         if (nearest) {
-            if (nearest.hp !== undefined) {
-                nearest.hp--;
-                if (nearest.hp <= 0) {
-                    this.enemiesKilled++;
-                }
-            }
-            this.particles.emit(nearest.position.x, nearest.position.y, '#ffff00', 10);
+            // Create visual projectile
+            const direction = nearest.position.subtract(tail).normalize();
+            this.gunProjectiles.push({
+                position: tail.copy(),
+                velocity: direction.multiply(CONFIG.gun.projectileSpeed),
+                target: nearest,
+                radius: CONFIG.gun.projectileRadius,
+                lifetime: 1000
+            });
         }
-    }
-
-    screenShake() {
-        this.canvas.classList.add('shake');
-        setTimeout(() => {
-            this.canvas.classList.remove('shake');
-        }, 500);
     }
 
     gameOver() {
@@ -509,8 +736,21 @@ export class Game {
         }
     }
 
+    togglePause() {
+        if (this.state === 'playing') {
+            this.state = 'paused';
+            document.getElementById('pause-menu').classList.add('active');
+        } else if (this.state === 'paused') {
+            this.state = 'playing';
+            document.getElementById('pause-menu').classList.remove('active');
+            this.lastTime = performance.now();  // Reset time to avoid big deltaTime jump
+            this.gameLoop(this.lastTime);
+        }
+    }
+
     pauseGame() {
-        // TODO: Implement pause
+        // Legacy method - redirects to toggle
+        this.togglePause();
     }
 
     updateUI() {

@@ -11,6 +11,7 @@ export class Turret {
         this.shootInterval = 2000;
         this.lastShot = 0;
         this.projectiles = [];
+        this.hp = 3;  // Turrets have 3 HP
     }
 
     update(deltaTime, snake, timeWarpActive) {
@@ -61,9 +62,10 @@ export class Turret {
         ctx.fill();
 
         this.projectiles.forEach(proj => {
-            ctx.fillStyle = '#ffff00';
+            // Orange projectiles to match turret color
+            ctx.fillStyle = CONFIG.colors.turret;
             ctx.shadowBlur = 10;
-            ctx.shadowColor = '#ffff00';
+            ctx.shadowColor = CONFIG.colors.turret;
             ctx.beginPath();
             ctx.arc(proj.position.x, proj.position.y, proj.radius, 0, Math.PI * 2);
             ctx.fill();
@@ -83,7 +85,15 @@ export class Turret {
         return false;
     }
 
+    // Check if snake body collides with turret (turret is solid unless ghost mode)
+    checkBodyCollision(snake) {
+        if (snake.powerups.ghost.active) return false;  // Can pass through in ghost mode
+        if (snake.isInvulnerable || snake.powerups.shield.active) return false;
+
+        return this.position.distance(snake.head) < this.radius + CONFIG.snake.segmentSize;
+    }
+
     isDead() {
-        return false;
+        return this.hp <= 0;
     }
 }

@@ -29,6 +29,9 @@ export class Snake {
             turret: { active: false, duration: 0, lastShot: 0 },
             shield: { active: false, duration: 0 }
         };
+
+        // Blindness effect
+        this.blindness = { active: false, duration: 0 };
     }
 
     update(deltaTime, input, levelMultiplier) {
@@ -124,6 +127,14 @@ export class Snake {
                 }
             }
         });
+
+        // Update blindness effect
+        if (this.blindness.active) {
+            this.blindness.duration -= deltaTime;
+            if (this.blindness.duration <= 0) {
+                this.blindness.active = false;
+            }
+        }
     }
 
     draw(ctx) {

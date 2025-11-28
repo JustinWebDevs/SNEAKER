@@ -7,6 +7,7 @@ export class ShopSystem {
         this.coins = this.loadCoins();
         this.upgrades = this.loadUpgrades();
         this.powerupLevels = this.loadPowerupLevels();
+        this.explosionBoostLevel = this.loadExplosionBoost();
     }
 
     loadCoins() {
@@ -38,6 +39,15 @@ export class ShopSystem {
 
     saveUpgrades() {
         localStorage.setItem('cyberSerpent_upgrades', JSON.stringify(this.upgrades));
+    }
+
+    loadExplosionBoost() {
+        const saved = localStorage.getItem('cyberSerpent_explosionBoost');
+        return saved ? parseInt(saved) : 0;  // Level 0 = base spawn rate
+    }
+
+    saveExplosionBoost() {
+        localStorage.setItem('cyberSerpent_explosionBoost', this.explosionBoostLevel.toString());
     }
 
     loadPowerupLevels() {
@@ -210,23 +220,57 @@ export class ShopSystem {
                 upgrade: 'shieldSpawner',
                 owned: this.upgrades.shieldSpawner,
                 desc: 'Aparecen power-ups de escudo'
+            },
+            {
+                name: `Explosión Rate +${this.explosionBoostLevel * 10}%`,
+                price: 200,
+                upgrade: 'explosionBoost',
+                owned: this.explosionBoostLevel >= 3,  // Max level 3
+                desc: `Más apariciones de explosión (Nivel ${this.explosionBoostLevel}/3)`,
+                isExplosionBoost: true,
+                currentLevel: this.explosionBoostLevel
             }
         ];
 
         items.forEach(item => {
             const div = document.createElement('div');
             div.className = 'shop-item' + (item.owned ? ' owned' : '');
-            div.innerHTML = `
-                <h3>${item.name}</h3>
-                <p style="font-size: 0.85rem; margin: 0.5rem 0;">${item.desc}</p>
-                <p class="price">${item.price} monedas</p>
-                <button ${item.owned || this.coins < item.price ? 'disabled' : ''} 
-                        onclick="game.shopSystem.buyUpgrade('${item.upgrade}', ${item.price}) && game.shopSystem.renderShop() && game.updateUI()">
-                    ${item.owned ? 'COMPRADO' : 'COMPRAR'}
-                </button>
-            `;
+
+            if (item.isExplosionBoost) {
+                const canUpgrade = this.explosionBoostLevel < 3 && this.coins >= item.price;
+                div.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">${item.desc}</p>
+                    <p class="price">${item.price} monedas</p>
+                    <button ${!canUpgrade ? 'disabled' : ''} 
+                            onclick="game.shopSystem.upgradeExplosionBoost() && game.shopSystem.renderShop() && game.updateUI()">
+                        ${this.explosionBoostLevel >= 3 ? 'MÁXIMO' : 'MEJORAR'}
+                    </button>
+                `;
+            } else {
+                div.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">${item.desc}</p>
+                    <p class="price">${item.price} monedas</p>
+                    <button ${item.owned || this.coins < item.price ? 'disabled' : ''} 
+                            onclick="game.shopSystem.buyUpgrade('${item.upgrade}', ${item.price}) && game.shopSystem.renderShop() && game.updateUI()">
+                        ${item.owned ? 'COMPRADO' : 'COMPRAR'}
+                    </button>
+                `;
+            }
             container.appendChild(div);
         });
+    }
+
+    upgradeExplosionBoost() {
+        if (this.explosionBoostLevel < 3 && this.coins >= 200) {
+            this.coins -= 200;
+            this.explosionBoostLevel++;
+            this.saveCoins();
+            this.saveExplosionBoost();
+            return true;
+        }
+        return false;
     }
 
     renderSkinUnlocks() {
