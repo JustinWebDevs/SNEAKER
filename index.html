@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SNEAKER - Modern Snake Game</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -30,7 +31,7 @@
             <button class="back-button" onclick="game.showMainMenu()" title="Volver al menú">← VOLVER</button>
             <h2 class="neon-text">CONTROLES</h2>
             <div class="controls-info">
-                <p><strong>Flechas / WASD:</strong> Mover serpiente</p>
+                <p><strong>Flechas / A - D: </strong> Mover serpiente</p>
                 <p><strong>ESPACIO:</strong> Dash (acelerar + invulnerabilidad)</p>
                 <p><strong>ESC:</strong> Pausar / Menú</p>
             </div>
@@ -136,6 +137,28 @@
                 <button class="neon-button" onclick="game.startGame()">REINTENTAR</button>
                 <button class="neon-button" onclick="game.showMainMenu()">MENÚ</button>
             </div>
+            <p style="margin-top: 1rem; color: #00ffff; font-size: 0.9rem;">Presiona ESPACIO para reiniciar</p>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-menu">
+            <div class="pause-content">
+                <h2 class="neon-text">PAUSA</h2>
+                <div class="menu-buttons">
+                    <button class="neon-button" onclick="game.togglePause()">CONTINUAR</button>
+                    <button class="neon-button" onclick="game.togglePause(); game.showMainMenu();">MENÚ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls">
+            <div id="joystick-container">
+                <div id="joystick-base">
+                    <div id="joystick-knob"></div>
+                </div>
+            </div>
+            <button id="dash-button">DASH</button>
         </div>
     </div>
 

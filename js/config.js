@@ -19,6 +19,7 @@ export const CONFIG = {
         levelUpScore: 100,  // 10 food * 10 points = 100 points per level
         speedIncreasePerLevel: 0.3,
         enemySpawnInterval: 5000,
+        minLevelForTurrets: 2,  // Turrets only spawn from level 2+
         foodValue: 10,
         coinValue: 1,
         hardModeLevel: 10,  // HARD MODE starts at level 10
@@ -68,7 +69,16 @@ export const CONFIG = {
         enemy: '#ff0000',
         turret: '#ff6600',
         virus: '#9900ff',
-        powerup: '#ff00ff'
+        powerup: '#ff00ff',
+        adversePowerup: '#ff4444',  // Red-orange warning color for adverse powerups
+        gunProjectile: '#0088ff'  // Blue color for gun projectiles
+    },
+    gun: {
+        fireRate: 1000,           // 1 second between shots
+        damage: 1,                // Damage per projectile
+        projectileSpeed: 10,      // Speed of projectiles
+        projectileRadius: 4,      // Radius for collision detection
+        range: 300                // Maximum targeting range
     },
     skins: {
         default: {
@@ -112,11 +122,33 @@ export const CONFIG = {
             glowColor: '#16213e',
             headColor: '#0f0f1e',
             mission: 'score_10000'
+        },
+        skinAlien: {
+            name: 'Super Alien',
+            bodyColor: '#00ff88',
+            glowColor: '#00ffaa',
+            headColor: '#00ff66',
+            code: 'w1s3v1l'
+        },
+        skinCow: {
+            name: 'Muuub',
+            bodyColor: '#ffffff',
+            glowColor: '#f0f0f0',
+            headColor: '#e0e0e0',
+            code: 'm000000b'
         }
+    },
+    gun: {
+        fireRate: 1000,  // 1 second between shots
+        projectileSpeed: 8,
+        projectileRadius: 5,
+        damage: 1
     }
 };
 
 // Secret codes
 export const SECRET_CODES = {
-    'm3rcy': 'skinMercy'
+    'm3rcy': 'skinMercy',
+    'w1s3v1l': 'skinAlien',
+    'm000000b': 'skinCow'
 };
