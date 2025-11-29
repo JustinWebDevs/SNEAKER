@@ -73,6 +73,13 @@ export const CONFIG = {
         adversePowerup: '#ff4444',  // Red-orange warning color for adverse powerups
         gunProjectile: '#0088ff'  // Blue color for gun projectiles
     },
+    gun: {
+        fireRate: 1000,           // 1 second between shots
+        damage: 1,                // Damage per projectile
+        projectileSpeed: 10,      // Speed of projectiles
+        projectileRadius: 4,      // Radius for collision detection
+        range: 300                // Maximum targeting range
+    },
     skins: {
         default: {
             name: 'Clásica',

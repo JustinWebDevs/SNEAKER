@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { randomInt } from './utils.js';
+import { randomInt, Vector2 } from './utils.js';
 import { Snake } from './entities/Snake.js';
 import { Food } from './entities/Food.js';
 import { PowerUp } from './entities/PowerUp.js';
@@ -254,6 +254,7 @@ export class Game {
         this.food = new Food();
         this.powerups = [];
         this.enemies = [];
+        this.gunProjectiles = [];  // Reset gun projectiles
         this.particles = new ParticleSystem();
 
         this.lastTime = performance.now();
@@ -692,7 +693,7 @@ export class Game {
             // Create visual projectile
             const direction = nearest.position.subtract(tail).normalize();
             this.gunProjectiles.push({
-                position: tail.copy(),
+                position: new Vector2(tail.x, tail.y),
                 velocity: direction.multiply(CONFIG.gun.projectileSpeed),
                 target: nearest,
                 radius: CONFIG.gun.projectileRadius,
@@ -725,7 +726,7 @@ export class Game {
         document.getElementById('game-over').classList.add('active');
 
         // Show mission completions
-        if (newUnlocks.length > 0) {
+        if (newUnlocks && Array.isArray(newUnlocks) && newUnlocks.length > 0) {
             setTimeout(() => {
                 let message = '¡Misiones completadas!\n\n';
                 newUnlocks.forEach(unlock => {
@@ -734,6 +735,13 @@ export class Game {
                 alert(message);
             }, 500);
         }
+    }
+
+    screenShake() {
+        this.canvas.classList.add('shake');
+        setTimeout(() => {
+            this.canvas.classList.remove('shake');
+        }, 500);
     }
 
     togglePause() {
