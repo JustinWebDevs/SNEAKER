@@ -459,44 +459,52 @@ body {
 #mobile-controls {
     display: none;
     position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
     pointer-events: none;
     z-index: 1000;
 }
 
-#joystick-container {
+#arrow-controls {
     position: fixed;
     bottom: 40px;
-    left: 40px;
+    left: 20px;
+    display: flex;
+    gap: 15px;
     pointer-events: all;
 }
 
-#joystick-base {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
+.arrow-button {
+    width: 80px;
+    height: 80px;
+    border-radius: 15px;
     background: rgba(0, 255, 255, 0.2);
     border: 3px solid #00ffff;
-    position: relative;
+    color: #00ffff;
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px #00ffff;
     box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.1s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-#joystick-knob {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #00ffff;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 15px #00ffff;
-    transition: all 0.1s ease;
+.arrow-button:active {
+    transform: scale(0.9);
+    background: rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
 }
 
 #dash-button {
     position: fixed;
     bottom: 40px;
-    right: 40px;
+    right: 20px;
     width: 100px;
     height: 100px;
     border-radius: 50%;
@@ -543,6 +551,7 @@ body {
         max-height: 100vh;
     }
 }
+
 /* Menu Scroll */
 .menu {
     max-height: 90vh !important;
