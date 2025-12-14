@@ -12,10 +12,15 @@ export class Particle {
     }
 
     update(deltaTime) {
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
+        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = deltaTime / 16.67;
+
+        this.x += this.velocity.x * frameMultiplier;
+        this.y += this.velocity.y * frameMultiplier;
         this.lifetime -= deltaTime;
-        this.velocity = this.velocity.multiply(0.98); // Friction
+        // Apply friction with normalized decay
+        const friction = Math.pow(0.98, frameMultiplier);
+        this.velocity = this.velocity.multiply(friction);
     }
 
     draw(ctx) {
