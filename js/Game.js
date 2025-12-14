@@ -298,12 +298,15 @@ export class Game {
             this.eatFood();
         }
 
-        // Magneto effect
+        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = effectiveDelta / 16.67;
+
+        // Magneto effect (normalized)
         if (this.snake.powerups.magneto.active) {
             const distance = this.food.position.distance(this.snake.head);
             if (distance < 150) {
                 const direction = this.snake.head.subtract(this.food.position).normalize();
-                this.food.position = this.food.position.add(direction.multiply(5));
+                this.food.position = this.food.position.add(direction.multiply(5 * frameMultiplier));
             }
         }
 
@@ -410,9 +413,9 @@ export class Game {
         // Update particles
         this.particles.update(deltaTime);
 
-        // Update gun projectiles
+        // Update gun projectiles (normalized)
         this.gunProjectiles.forEach(proj => {
-            proj.position = proj.position.add(proj.velocity);
+            proj.position = proj.position.add(proj.velocity.multiply(frameMultiplier));
             proj.lifetime -= deltaTime;
 
             // Check collision with target

@@ -14,9 +14,12 @@ export class Hunter {
     }
 
     update(deltaTime, snake, timeWarpActive) {
+        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = deltaTime / 16.67;
+
         const speed = timeWarpActive ? this.speed * 0.3 : this.speed;
         const direction = snake.head.subtract(this.position).normalize();
-        this.velocity = direction.multiply(speed);
+        this.velocity = direction.multiply(speed * frameMultiplier);
         this.position = this.position.add(this.velocity);
     }
 

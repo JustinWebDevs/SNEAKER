@@ -23,9 +23,12 @@ export class Turret {
             this.lastShot = 0;
         }
 
+        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = deltaTime / 16.67;
+
         this.projectiles.forEach(proj => {
             const speed = timeWarpActive ? 2 : 5;
-            const velocity = Vector2.fromAngle(proj.angle).multiply(speed);
+            const velocity = Vector2.fromAngle(proj.angle).multiply(speed * frameMultiplier);
             proj.position = proj.position.add(velocity);
         });
 

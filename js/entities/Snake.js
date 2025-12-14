@@ -35,16 +35,19 @@ export class Snake {
     }
 
     update(deltaTime, input, levelMultiplier) {
-        // Handle rotation
-        if (input.left) this.angle -= CONFIG.snake.rotationSpeed;
-        if (input.right) this.angle += CONFIG.snake.rotationSpeed;
+        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = deltaTime / 16.67;
+
+        // Handle rotation (normalized)
+        if (input.left) this.angle -= CONFIG.snake.rotationSpeed * frameMultiplier;
+        if (input.right) this.angle += CONFIG.snake.rotationSpeed * frameMultiplier;
 
         // Handle dash
         if (input.dash && this.dashEnergy >= 100 && !this.isDashing) {
             this.startDash();
         }
 
-        // Update dash state
+        // Update dash state (already uses deltaTime correctly)
         if (this.isDashing) {
             this.dashEnergy = Math.max(0, this.dashEnergy - deltaTime * 0.2);
         } else {
@@ -56,9 +59,9 @@ export class Snake {
         const currentSpeed = (this.speed + levelMultiplier) *
             (this.isDashing ? CONFIG.snake.dashSpeedMultiplier : 1);
 
-        // Move head
+        // Move head (normalized for consistent speed across different refresh rates)
         const direction = Vector2.fromAngle(this.angle);
-        const velocity = direction.multiply(currentSpeed);
+        const velocity = direction.multiply(currentSpeed * frameMultiplier);
         this.head = this.head.add(velocity);
 
         // Wrap around screen
