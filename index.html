@@ -31,7 +31,7 @@
             <button class="back-button" onclick="game.showMainMenu()" title="Volver al menú">← VOLVER</button>
             <h2 class="neon-text">CONTROLES</h2>
             <div class="controls-info">
-                <p><strong>Flechas / WASD:</strong> Mover serpiente</p>
+                <p><strong>Flechas / A - D: </strong> Mover serpiente</p>
                 <p><strong>ESPACIO:</strong> Dash (acelerar + invulnerabilidad)</p>
                 <p><strong>ESC:</strong> Pausar / Menú</p>
             </div>
@@ -141,11 +141,13 @@
         </div>
 
         <!-- Pause Menu -->
-        <div id="pause-menu" class="menu">
-            <h2 class="neon-text">PAUSA</h2>
-            <div class="menu-buttons">
-                <button class="neon-button" onclick="game.togglePause()">CONTINUAR</button>
-                <button class="neon-button" onclick="game.togglePause(); game.showMainMenu();">MENÚ</button>
+        <div id="pause-menu">
+            <div class="pause-content">
+                <h2 class="neon-text">PAUSA</h2>
+                <div class="menu-buttons">
+                    <button class="neon-button" onclick="game.togglePause()">CONTINUAR</button>
+                    <button class="neon-button" onclick="game.togglePause(); game.showMainMenu();">MENÚ</button>
+                </div>
             </div>
         </div>
 
