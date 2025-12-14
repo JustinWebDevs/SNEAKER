@@ -59,9 +59,6 @@ export class Game {
 
         // Mobile controls
         this.isMobile = this.detectMobile();
-        this.joystickActive = false;
-        this.joystickStartPos = { x: 0, y: 0 };
-        this.joystickCurrentPos = { x: 0, y: 0 };
 
         this.setupEventListeners();
         this.setupMobileControls();
@@ -140,69 +137,46 @@ export class Game {
             mobileControls.style.display = 'block';
         }
 
-        const joystickBase = document.getElementById('joystick-base');
-        const joystickKnob = document.getElementById('joystick-knob');
+        const leftArrow = document.getElementById('left-arrow');
+        const rightArrow = document.getElementById('right-arrow');
         const dashButton = document.getElementById('dash-button');
 
-        if (joystickBase && joystickKnob) {
-            // Joystick touch events
-            joystickBase.addEventListener('touchstart', (e) => {
+        // Left arrow button
+        if (leftArrow) {
+            leftArrow.addEventListener('touchstart', (e) => {
                 if (this.state !== 'playing') return;
                 e.preventDefault();
-                this.joystickActive = true;
-                const rect = joystickBase.getBoundingClientRect();
-                this.joystickStartPos = {
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2
-                };
-            });
-
-            joystickBase.addEventListener('touchmove', (e) => {
-                if (this.state !== 'playing' || !this.joystickActive) return;
-                e.preventDefault();
-
-                const touch = e.touches[0];
-                const dx = touch.clientX - this.joystickStartPos.x;
-                const dy = touch.clientY - this.joystickStartPos.y;
-
-                // Limit knob movement to joystick base radius
-                const maxDistance = 35; // Half of joystick base radius
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const limitedDx = distance > maxDistance ? (dx / distance) * maxDistance : dx;
-                const limitedDy = distance > maxDistance ? (dy / distance) * maxDistance : dy;
-
-                // Update knob position
-                joystickKnob.style.transform = `translate(calc(-50% + ${limitedDx}px), calc(-50% + ${limitedDy}px))`;
-
-                // Determine direction (horizontal movement)
                 const left = this.controlsInverted;
-                if (Math.abs(limitedDx) > 10) {
-                    if (limitedDx < 0) {
-                        this.input[left ? 'right' : 'left'] = true;
-                        this.input[left ? 'left' : 'right'] = false;
-                    } else {
-                        this.input[left ? 'left' : 'right'] = true;
-                        this.input[left ? 'right' : 'left'] = false;
-                    }
-                } else {
-                    this.input.left = false;
-                    this.input.right = false;
-                }
+                this.input[left ? 'right' : 'left'] = true;
             });
 
-            joystickBase.addEventListener('touchend', (e) => {
+            leftArrow.addEventListener('touchend', (e) => {
                 if (this.state !== 'playing') return;
                 e.preventDefault();
-                this.joystickActive = false;
                 this.input.left = false;
                 this.input.right = false;
-                // Reset knob position
-                joystickKnob.style.transform = 'translate(-50%, -50%)';
             });
         }
 
+        // Right arrow button
+        if (rightArrow) {
+            rightArrow.addEventListener('touchstart', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                const left = this.controlsInverted;
+                this.input[left ? 'left' : 'right'] = true;
+            });
+
+            rightArrow.addEventListener('touchend', (e) => {
+                if (this.state !== 'playing') return;
+                e.preventDefault();
+                this.input.left = false;
+                this.input.right = false;
+            });
+        }
+
+        // Dash button
         if (dashButton) {
-            // Dash button touch events
             dashButton.addEventListener('touchstart', (e) => {
                 if (this.state !== 'playing') return;
                 e.preventDefault();
@@ -284,9 +258,9 @@ export class Game {
         const timeWarp = this.snake.powerups.timeWarp.active;
         const effectiveDelta = timeWarp ? deltaTime * 0.3 : deltaTime;
 
-        // Update snake
+        // Update snake (uses normal deltaTime - timeWarp should NOT affect player)
         const levelMultiplier = (this.level - 1) * CONFIG.game.speedIncreasePerLevel;
-        this.snake.update(effectiveDelta, this.input, levelMultiplier);
+        this.snake.update(deltaTime, this.input, levelMultiplier);
 
         // Check self-collision
         if (this.snake.checkSelfCollision()) {
@@ -299,10 +273,11 @@ export class Game {
             this.eatFood();
         }
 
-        // Frame rate normalization factor (base: 60 FPS = 16.67ms per frame)
-        const frameMultiplier = effectiveDelta / 16.67;
+        // Frame rate normalization factors (base: 60 FPS = 16.67ms per frame)
+        const frameMultiplier = deltaTime / 16.67;  // For player-related things
+        const enemyFrameMultiplier = effectiveDelta / 16.67;  // For enemies (affected by timeWarp)
 
-        // Magneto effect (normalized)
+        // Magneto effect (normalized - uses player's normal time)
         if (this.snake.powerups.magneto.active) {
             const distance = this.food.position.distance(this.snake.head);
             if (distance < 150) {
