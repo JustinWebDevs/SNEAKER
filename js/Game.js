@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { randomInt, Vector2 } from './utils.js';
+import { randomInt, randomRange, Vector2 } from './utils.js';
 import { Snake } from './entities/Snake.js';
 import { Food } from './entities/Food.js';
 import { PowerUp } from './entities/PowerUp.js';
@@ -46,6 +46,7 @@ export class Game {
         this.food = null;
         this.powerups = [];
         this.enemies = [];
+        this.pendingEnemySpawns = [];  // Visual warnings before enemy spawns
         this.gunProjectiles = [];  // Visual projectiles for gun powerup
 
         // Timers
@@ -228,6 +229,7 @@ export class Game {
         this.food = new Food();
         this.powerups = [];
         this.enemies = [];
+        this.pendingEnemySpawns = [];  // Reset pending spawns
         this.gunProjectiles = [];  // Reset gun projectiles
         this.particles = new ParticleSystem();
 
@@ -408,6 +410,9 @@ export class Game {
         });
         this.gunProjectiles = this.gunProjectiles.filter(p => p.lifetime > 0);
 
+        // Update pending enemy spawns (visual warnings)
+        this.updatePendingSpawns(deltaTime);
+
         // Update inverted controls
         if (this.controlsInverted) {
             this.controlsInvertedTimer -= deltaTime;
@@ -438,6 +443,9 @@ export class Game {
             this.ctx.lineTo(CONFIG.canvas.width, i);
             this.ctx.stroke();
         }
+
+        // Draw pending spawn warnings (before other entities so they appear behind)
+        this.drawPendingSpawns();
 
         this.food.draw(this.ctx);
         this.powerups.forEach(p => p.draw(this.ctx));
@@ -638,14 +646,114 @@ export class Game {
         const canSpawnTurrets = this.level >= CONFIG.game.minLevelForTurrets;
 
         if (rand < 0.6) {
+            // Hunters spawn from edges - no warning needed
             this.enemies.push(new Hunter());
         } else if (rand < 0.85 && canSpawnTurrets) {
-            this.enemies.push(new Turret());
+            // Turret - shows warning before spawning
+            this.createPendingSpawn('turret');
         } else if (rand < 0.92) {
-            this.enemies.push(new Virus());
+            // Virus - shows warning before spawning
+            this.createPendingSpawn('virus');
         } else {
-            this.enemies.push(new Blindness());
+            // Blindness - shows warning before spawning
+            this.createPendingSpawn('blindness');
         }
+    }
+
+    createPendingSpawn(type) {
+        const position = new Vector2(
+            randomRange(100, CONFIG.canvas.width - 100),
+            randomRange(100, CONFIG.canvas.height - 100)
+        );
+
+        this.pendingEnemySpawns.push({
+            type: type,
+            position: position,
+            timeRemaining: 1500,  // 1.5 seconds warning
+            totalTime: 1500
+        });
+    }
+
+    updatePendingSpawns(deltaTime) {
+        this.pendingEnemySpawns.forEach(spawn => {
+            spawn.timeRemaining -= deltaTime;
+
+            if (spawn.timeRemaining <= 0) {
+                // Spawn the actual enemy at the predetermined position
+                switch (spawn.type) {
+                    case 'turret':
+                        const turret = new Turret();
+                        turret.position = spawn.position;
+                        this.enemies.push(turret);
+                        break;
+                    case 'virus':
+                        const virus = new Virus();
+                        virus.position = spawn.position;
+                        this.enemies.push(virus);
+                        break;
+                    case 'blindness':
+                        const blindness = new Blindness();
+                        blindness.position = spawn.position;
+                        this.enemies.push(blindness);
+                        break;
+                }
+            }
+        });
+
+        // Remove completed spawns
+        this.pendingEnemySpawns = this.pendingEnemySpawns.filter(s => s.timeRemaining > 0);
+    }
+
+    drawPendingSpawns() {
+        this.pendingEnemySpawns.forEach(spawn => {
+            const progress = 1 - (spawn.timeRemaining / spawn.totalTime);
+            const pulse = Math.sin(Date.now() * 0.015) * 0.3 + 0.7;
+
+            this.ctx.save();
+
+            // Outer warning circle (grows as time passes)
+            const maxRadius = 50;
+            const currentRadius = maxRadius * progress;
+
+            // Color based on enemy type
+            let color;
+            switch (spawn.type) {
+                case 'turret':
+                    color = CONFIG.colors.turret;
+                    break;
+                case 'virus':
+                case 'blindness':
+                    color = CONFIG.colors.adversePowerup;
+                    break;
+                default:
+                    color = '#ff0000';
+            }
+
+            // Pulsing warning circle
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = pulse * (0.5 + progress * 0.5);
+            this.ctx.beginPath();
+            this.ctx.arc(spawn.position.x, spawn.position.y, currentRadius, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            // Inner crosshair
+            this.ctx.globalAlpha = pulse;
+            this.ctx.beginPath();
+            this.ctx.moveTo(spawn.position.x - 10, spawn.position.y);
+            this.ctx.lineTo(spawn.position.x + 10, spawn.position.y);
+            this.ctx.moveTo(spawn.position.x, spawn.position.y - 10);
+            this.ctx.lineTo(spawn.position.x, spawn.position.y + 10);
+            this.ctx.stroke();
+
+            // Warning text
+            this.ctx.fillStyle = color;
+            this.ctx.font = '12px Orbitron';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('⚠', spawn.position.x, spawn.position.y - 25);
+
+            this.ctx.restore();
+        });
     }
 
     shootFromTail() {
