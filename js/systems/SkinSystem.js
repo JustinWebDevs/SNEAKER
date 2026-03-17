@@ -40,121 +40,273 @@ export class SkinSystem {
         const ctx = this.previewCtx;
         const canvas = this.previewCanvas;
         const skinData = CONFIG.skins[skinId] || CONFIG.skins.default;
+        const ds = skinData.drawStyle || {};
 
-        // Clear canvas
         ctx.fillStyle = 'rgba(10, 10, 30, 0.9)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Update rotation
         this.previewAngle += 0.02;
 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const segmentSize = 15;
-        const segmentCount = 5;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const r = 15;
+        const segCount = 8;
 
-        // Draw mini snake segments
-        for (let i = segmentCount - 1; i >= 0; i--) {
-            const angle = this.previewAngle + (i * 0.3);
-            const distance = i * 20;
-            const x = centerX + Math.cos(angle) * distance;
-            const y = centerY + Math.sin(angle) * distance;
-            const alpha = (i / segmentCount) * 0.7 + 0.3;
-
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = skinData.bodyColor;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = skinData.glowColor;
-
-            ctx.beginPath();
-            ctx.arc(x, y, segmentSize, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Robot shine
-            if (skinId === 'skinRobot') {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.beginPath();
-                ctx.arc(x - 3, y - 3, segmentSize * 0.4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.restore();
+        // Build fake segments array (spiral curve)
+        const segs = [];
+        for (let i = 0; i < segCount; i++) {
+            const a = this.previewAngle + i * 0.38;
+            const dist = i * 18;
+            segs.push({ x: cx + Math.cos(a) * dist, y: cy + Math.sin(a) * dist });
         }
 
-        // Draw head
+        // Body glow pass
         ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(this.previewAngle);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
-        ctx.fillStyle = skinData.headColor;
-        ctx.shadowBlur = 25;
+        ctx.globalAlpha = 0.28;
+        ctx.strokeStyle = skinData.glowColor;
+        ctx.lineWidth = r * 2 + 10;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = skinData.glowColor;
+        this._previewStrokePath(ctx, segs);
+
+        // Main body
+        ctx.globalAlpha = 1.0;
+        ctx.lineWidth = r * 2;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = skinData.glowColor;
 
-        ctx.beginPath();
-        ctx.arc(0, 0, segmentSize + 3, 0, Math.PI * 2);
-        ctx.fill();
+        if (ds.body === 'gradient' && ds.gradientColors) {
+            const grad = ctx.createLinearGradient(segs[0].x, segs[0].y, segs[segCount-1].x, segs[segCount-1].y);
+            grad.addColorStop(0, ds.gradientColors[0]);
+            grad.addColorStop(1, ds.gradientColors[1]);
+            ctx.strokeStyle = grad;
+        } else {
+            ctx.strokeStyle = skinData.bodyColor;
+        }
+        this._previewStrokePath(ctx, segs);
 
-        // Skin-specific effects
-        if (skinId === 'skinFire') {
-            ctx.fillStyle = '#ffff00';
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#ff8c00';
-            ctx.beginPath();
-            ctx.arc(0, 0, segmentSize * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (skinId === 'skinRobot') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.beginPath();
-            ctx.arc(-2, -2, segmentSize * 0.5, 0, Math.PI * 2);
-            ctx.fill();
+        // Highlight stripe
+        if (ds.highlight) {
+            ctx.strokeStyle = ds.highlight;
+            ctx.lineWidth = r * 0.55;
+            ctx.shadowBlur = 0;
+            this._previewStrokePath(ctx, segs);
+        }
+        ctx.restore();
 
-            ctx.strokeStyle = '#00ffff';
-            ctx.lineWidth = 2;
+        // Scale/stripe/spot patterns on body
+        ctx.save();
+        if (ds.scalePattern) {
+            ctx.fillStyle = ds.scaleColor || 'rgba(255,255,255,0.2)';
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < segs.length - 1; i += 2) {
+                const seg = segs[i];
+                const next = segs[i + 1];
+                const angle = Math.atan2(next.y - seg.y, next.x - seg.x);
+                ctx.save();
+                ctx.translate(seg.x, seg.y);
+                ctx.rotate(angle);
+                if (ds.scalePattern === 'diamond') {
+                    ctx.beginPath();
+                    ctx.moveTo(6, 0); ctx.lineTo(0, -5); ctx.lineTo(-6, 0); ctx.lineTo(0, 5);
+                    ctx.closePath(); ctx.fill();
+                } else if (ds.scalePattern === 'dots') {
+                    ctx.beginPath();
+                    ctx.arc(0, -4, 2.5, 0, Math.PI * 2);
+                    ctx.arc(0, 4, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (ds.scalePattern === 'oval') {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+        if (ds.body === 'striped') {
+            ctx.strokeStyle = ds.stripeColor || 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = ds.stripeWidth || 3;
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < segs.length - 1; i += 3) {
+                const seg = segs[i];
+                const next = segs[i + 1];
+                const angle = Math.atan2(next.y - seg.y, next.x - seg.x);
+                const perp = angle + Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(seg.x + Math.cos(perp) * r, seg.y + Math.sin(perp) * r);
+                ctx.lineTo(seg.x - Math.cos(perp) * r, seg.y - Math.sin(perp) * r);
+                ctx.stroke();
+            }
+        }
+        if (ds.body === 'spotted') {
+            ctx.fillStyle = ds.spotColor || '#000000';
+            ctx.shadowBlur = 0;
+            const spotPattern = [
+                [0,   -0.5,  0.55, 0.38],
+                [2,    0.6,  0.45, 0.60],
+                [4,   -0.15, 0.65, 0.42],
+                [5,    0.4,  0.40, 0.50],
+                [7,   -0.6,  0.50, 0.35],
+            ];
+            const patternLen = 7;
+            for (let base = 0; base < segs.length - 2; base += patternLen) {
+                for (const [offset, side, sw, sh] of spotPattern) {
+                    const idx = base + offset;
+                    if (idx >= segs.length - 1) continue;
+                    const seg = segs[idx];
+                    const next = segs[idx + 1];
+                    const angle = Math.atan2(next.y - seg.y, next.x - seg.x);
+                    const perp = angle + Math.PI / 2;
+                    ctx.save();
+                    ctx.translate(seg.x + Math.cos(perp) * side * r, seg.y + Math.sin(perp) * side * r);
+                    ctx.rotate(angle + (((base + offset) % 3) - 1) * 0.3);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, r * sw, r * sh, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+        ctx.restore();
+
+        // Head
+        const headAngle = this.previewAngle - Math.PI; // facing direction
+        ctx.save();
+        ctx.translate(segs[0].x, segs[0].y);
+        ctx.rotate(headAngle);
+
+        ctx.shadowBlur = 28;
+        ctx.shadowColor = skinData.glowColor;
+        ctx.fillStyle = skinData.headColor;
+
+        if (ds.headShape === 'pointed') {
             ctx.beginPath();
-            ctx.moveTo(0, -10);
-            ctx.lineTo(0, -15);
+            ctx.ellipse(3, 0, r + 4, r - 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (ds.body === 'gradient' && ds.gradientColors) {
+            const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+            grad.addColorStop(0, ds.gradientColors[0] + 'cc');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Tongue
+        const tongueOut = Math.sin(Date.now() * 0.007) > 0.1;
+        if (ds.tongueColor && tongueOut) {
+            ctx.strokeStyle = ds.tongueColor;
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = ds.tongueColor;
+            ctx.beginPath();
+            ctx.moveTo(r + 1, 0);
+            ctx.lineTo(r + 8, 0);
             ctx.stroke();
-            ctx.fillStyle = '#00ffff';
             ctx.beginPath();
-            ctx.arc(0, -15, 2, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (skinId === 'skinMercy') {
-            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, segmentSize);
-            gradient.addColorStop(0, '#e0aaff');
-            gradient.addColorStop(1, '#c77dff');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(0, 0, segmentSize * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (skinId === 'skinGold') {
-            ctx.fillStyle = '#ffed4e';
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ffd700';
-            ctx.beginPath();
-            ctx.arc(0, 0, segmentSize * 0.6, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(r + 8, 0);
+            ctx.lineTo(r + 13, -3);
+            ctx.moveTo(r + 8, 0);
+            ctx.lineTo(r + 13, 3);
+            ctx.stroke();
         }
 
         // Eyes
-        ctx.fillStyle = skinId === 'skinFire' ? '#000000' : '#ffffff';
-        ctx.shadowBlur = 5;
-        ctx.beginPath();
-        ctx.arc(6, -5, 2.5, 0, Math.PI * 2);
-        ctx.arc(6, 5, 2.5, 0, Math.PI * 2);
-        ctx.fill();
+        const eyeX = r * 0.35;
+        const eyeY = r * 0.38;
+        const eyeR = r * 0.22;
 
-        if (skinId === 'skinRobot') {
-            ctx.fillStyle = '#00ff00';
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#00ff00';
+        if (ds.eyeStyle === 'robot') {
+            ctx.fillStyle = ds.eyeColor || '#00ff00';
+            ctx.shadowColor = ds.eyeColor || '#00ff00';
+            ctx.shadowBlur = 12;
+            ctx.fillRect(eyeX - 2.5, -eyeY - 2.5, 5, 5);
+            ctx.fillRect(eyeX - 2.5, eyeY - 2.5, 5, 5);
+            ctx.strokeStyle = ds.antennaColor || '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = ds.antennaColor || '#00ffff';
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.arc(6, -5, 2, 0, Math.PI * 2);
-            ctx.arc(6, 5, 2, 0, Math.PI * 2);
+            ctx.moveTo(0, -r);
+            ctx.lineTo(0, -r - 9);
+            ctx.stroke();
+            ctx.fillStyle = ds.antennaColor || '#00ffff';
+            ctx.beginPath();
+            ctx.arc(0, -r - 9, 2.5, 0, Math.PI * 2);
             ctx.fill();
+        } else if (ds.eyeStyle === 'alien') {
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.ellipse(eyeX, -eyeY, eyeR * 1.6, eyeR * 0.9, 0, 0, Math.PI * 2);
+            ctx.ellipse(eyeX, eyeY, eyeR * 1.6, eyeR * 0.9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(eyeX + 3, -eyeY, eyeR * 0.5, 0, Math.PI * 2);
+            ctx.arc(eyeX + 3, eyeY, eyeR * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.arc(eyeX, -eyeY, eyeR, 0, Math.PI * 2);
+            ctx.arc(eyeX, eyeY, eyeR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            if (ds.eyeStyle === 'slit') {
+                ctx.fillStyle = ds.eyeColor || '#000000';
+                [-eyeY, eyeY].forEach(y => {
+                    ctx.save();
+                    ctx.translate(eyeX, y);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, eyeR * 0.22, eyeR * 0.85, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+            } else if (ds.eyeStyle === 'glow') {
+                ctx.fillStyle = ds.eyeColor || '#4466ff';
+                ctx.shadowColor = ds.eyeColor || '#4466ff';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.arc(eyeX, -eyeY, eyeR * 0.75, 0, Math.PI * 2);
+                ctx.arc(eyeX, eyeY, eyeR * 0.75, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = ds.eyeColor || '#000000';
+                ctx.beginPath();
+                ctx.arc(eyeX + eyeR * 0.2, -eyeY, eyeR * 0.52, 0, Math.PI * 2);
+                ctx.arc(eyeX + eyeR * 0.2, eyeY, eyeR * 0.52, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         ctx.restore();
+    }
+
+    _previewStrokePath(ctx, segs) {
+        ctx.beginPath();
+        ctx.moveTo(segs[0].x, segs[0].y);
+        for (let i = 1; i < segs.length; i++) {
+            ctx.lineTo(segs[i].x, segs[i].y);
+        }
+        ctx.stroke();
     }
 
     startPreviewAnimation(skinId) {
