@@ -589,3 +589,27 @@ body {
 .pause-content h2 {
     margin-bottom: 2rem;
 }
+/* Rotate overlay: hidden by default, only shows on mobile portrait */
+#rotate-overlay {
+    display: none;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+    #rotate-overlay {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(10, 10, 30, 0.97);
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #00ffff;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .rotate-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+}

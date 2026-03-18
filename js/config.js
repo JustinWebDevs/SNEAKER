@@ -86,63 +86,143 @@ export const CONFIG = {
             bodyColor: '#00ffff',
             glowColor: '#0099ff',
             headColor: '#00ffff',
-            unlocked: true
+            unlocked: true,
+            drawStyle: {
+                body: 'solid',
+                highlight: 'rgba(255,255,255,0.25)',
+                scalePattern: 'dots',
+                scaleColor: 'rgba(255,255,255,0.2)',
+                headShape: 'round',
+                eyeStyle: 'round',
+                eyeColor: '#000088',
+                tongueColor: '#ff6666'
+            }
         },
         skinFire: {
             name: 'Fuego',
             bodyColor: '#ff4500',
             glowColor: '#ff8c00',
-            headColor: '#ff0000',
-            price: 300
+            headColor: '#ff2200',
+            price: 300,
+            drawStyle: {
+                body: 'gradient',
+                gradientColors: ['#ff6600', '#ffee00'],
+                highlight: 'rgba(255,220,0,0.3)',
+                scalePattern: 'diamond',
+                scaleColor: 'rgba(255,200,0,0.35)',
+                headShape: 'pointed',
+                eyeStyle: 'slit',
+                eyeColor: '#000000',
+                tongueColor: '#ffff00'
+            }
         },
         skinRobot: {
             name: 'Robótica',
             bodyColor: '#c0c0c0',
             glowColor: '#ffffff',
-            headColor: '#808080',
-            price: 300
+            headColor: '#888888',
+            price: 300,
+            drawStyle: {
+                body: 'striped',
+                stripeColor: 'rgba(0,0,0,0.3)',
+                stripeWidth: 3,
+                highlight: 'rgba(255,255,255,0.45)',
+                scalePattern: false,
+                headShape: 'round',
+                eyeStyle: 'robot',
+                eyeColor: '#00ff00',
+                antennaColor: '#00ffff',
+                tongueColor: null
+            }
         },
         skinMercy: {
             name: 'Mercy',
             bodyColor: '#9d4edd',
             glowColor: '#c77dff',
             headColor: '#7b2cbf',
-            code: 'm3rcy'
+            code: 'm3rcy',
+            drawStyle: {
+                body: 'gradient',
+                gradientColors: ['#c77dff', '#7b2cbf'],
+                highlight: 'rgba(224,170,255,0.3)',
+                scalePattern: 'dots',
+                scaleColor: 'rgba(255,255,255,0.18)',
+                headShape: 'round',
+                eyeStyle: 'round',
+                eyeColor: '#220044',
+                tongueColor: '#e0aaff'
+            }
         },
         skinGold: {
             name: 'Dorada',
             bodyColor: '#ffd700',
             glowColor: '#ffed4e',
             headColor: '#ffb700',
-            mission: 'reach_level_10'
+            mission: 'reach_level_10',
+            drawStyle: {
+                body: 'gradient',
+                gradientColors: ['#ffd700', '#aa6600'],
+                highlight: 'rgba(255,255,200,0.5)',
+                scalePattern: 'diamond',
+                scaleColor: 'rgba(160,100,0,0.45)',
+                headShape: 'round',
+                eyeStyle: 'round',
+                eyeColor: '#442200',
+                tongueColor: '#ff6666'
+            }
         },
         skinDark: {
             name: 'Oscura',
             bodyColor: '#1a1a2e',
-            glowColor: '#16213e',
+            glowColor: '#3333aa',
             headColor: '#0f0f1e',
-            mission: 'score_10000'
+            mission: 'score_10000',
+            drawStyle: {
+                body: 'solid',
+                highlight: 'rgba(80,80,220,0.2)',
+                scalePattern: 'diamond',
+                scaleColor: 'rgba(60,60,180,0.5)',
+                headShape: 'round',
+                eyeStyle: 'glow',
+                eyeColor: '#4466ff',
+                tongueColor: '#4466ff'
+            }
         },
         skinAlien: {
             name: 'Super Alien',
             bodyColor: '#00ff88',
             glowColor: '#00ffaa',
-            headColor: '#00ff66',
-            code: 'w1s3v1l'
+            headColor: '#00cc55',
+            code: 'w1s3v1l',
+            drawStyle: {
+                body: 'gradient',
+                gradientColors: ['#00ff88', '#006633'],
+                highlight: 'rgba(100,255,180,0.3)',
+                scalePattern: 'oval',
+                scaleColor: 'rgba(0,80,30,0.55)',
+                headShape: 'pointed',
+                eyeStyle: 'alien',
+                eyeColor: '#ff0000',
+                tongueColor: '#00ffcc'
+            }
         },
         skinCow: {
             name: 'Muuub',
-            bodyColor: '#ffffff',
-            glowColor: '#f0f0f0',
-            headColor: '#e0e0e0',
-            code: 'm000000b'
+            bodyColor: '#f0f0f0',
+            glowColor: '#cccccc',
+            headColor: '#e8e8e8',
+            code: 'm000000b',
+            drawStyle: {
+                body: 'spotted',
+                spotColor: '#1a1a1a',
+                highlight: 'rgba(255,255,255,0.4)',
+                scalePattern: false,
+                headShape: 'round',
+                eyeStyle: 'round',
+                eyeColor: '#222222',
+                tongueColor: '#ff9999'
+            }
         }
-    },
-    gun: {
-        fireRate: 1000,  // 1 second between shots
-        projectileSpeed: 8,
-        projectileRadius: 5,
-        damage: 1
     }
 };
 
