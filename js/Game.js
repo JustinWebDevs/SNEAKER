@@ -12,7 +12,16 @@ import { ProgressionSystem } from './systems/ProgressionSystem.js';
 import { SkinSystem } from './systems/SkinSystem.js';
 import { ShopSystem } from './systems/ShopSystem.js';
 import { RiveUI } from './systems/RiveUI.js';
+import { SteeringInput, LEFT, RIGHT } from './systems/SteeringInput.js';
+import { TailTurret, drawTurretShot, drawHitFlash } from './systems/TailTurret.js';
 import { ICONS, iconSvg, hydrateIcons } from './icons.js';
+import { EXPIRY_WARNING_MS } from './render.js';
+
+const MAGNETO_RANGE = 150;  // px: food closer than this is pulled toward the head
+
+const HINTS_STORAGE_KEY = 'cyberSerpent_powerupHints';
+const HINT_TIMES = 1;           // pickups per power-up that still show its hint
+const HINT_DURATION_MS = 2600;
 
 export class Game {
     constructor() {
@@ -21,11 +30,13 @@ export class Game {
         this.canvas.width = CONFIG.canvas.width;
         this.canvas.height = CONFIG.canvas.height;
 
+        // Snake reads left/right from here; they are derived from this.steering every frame
         this.input = {
             left: false,
             right: false,
             dash: false
         };
+        this.steering = new SteeringInput();
 
         this.state = 'menu';
         this.score = 0;
@@ -52,6 +63,7 @@ export class Game {
         this.enemies = [];
         this.pendingEnemySpawns = [];  // Visual warnings before enemy spawns
         this.gunProjectiles = [];  // Visual projectiles for gun powerup
+        this.tailTurret = new TailTurret();
 
         // Timers
         this.lastTime = 0;
@@ -74,51 +86,56 @@ export class Game {
     }
 
     setupEventListeners() {
+        // Physical key codes, so it works with any keyboard layout and with Caps Lock on
+        const steerKeys = {
+            KeyA: LEFT,
+            ArrowLeft: LEFT,
+            KeyD: RIGHT,
+            ArrowRight: RIGHT
+        };
+
         window.addEventListener('keydown', (e) => {
-            if (this.state !== 'playing') return;
-
-            const left = this.controlsInverted;
-
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                this.input[left ? 'right' : 'left'] = true;
+            if (steerKeys[e.code] !== undefined) {
+                // Held keys are tracked in every state, so a key held through a pause or restart keeps working
+                if (this.state === 'playing') e.preventDefault();
+                if (!e.repeat) this.steering.press(e.code, steerKeys[e.code]);
+                return;
             }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                this.input[left ? 'left' : 'right'] = true;
-            }
-            if (e.key === ' ') {
+
+            if (e.code === 'Space' && (this.state === 'playing' || this.state === 'gameover')) {
                 e.preventDefault();
-                // Only allow dash during gameplay, not in game over
+                if (e.repeat) return;
                 if (this.state === 'playing') {
                     this.input.dash = true;
+                } else if (this.state === 'gameover') {
+                    // Quick restart
+                    this.startGame();
                 }
+                return;
             }
-            if (e.key === 'Escape') {
-                if (this.state === 'playing') {
-                    this.togglePause();
-                }
+
+            if (e.code === 'Escape' && this.state === 'playing') {
+                this.togglePause();
             }
         });
 
         window.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                this.input.left = false;
-                this.input.right = false;
+            if (steerKeys[e.code] !== undefined) {
+                this.steering.release(e.code);
             }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                this.input.left = false;
-                this.input.right = false;
-            }
-            if (e.key === ' ') {
+            if (e.code === 'Space') {
                 this.input.dash = false;
             }
         });
 
-        // Quick reset on spacebar during game over
-        window.addEventListener('keydown', (e) => {
-            if (this.state === 'gameover' && e.key === ' ') {
-                e.preventDefault();
-                this.startGame();
-            }
+        // Keyups are never delivered while the window is unfocused; forget held keys so none get stuck
+        const releaseAll = () => {
+            this.steering.clear();
+            this.input.dash = false;
+        };
+        window.addEventListener('blur', releaseAll);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) releaseAll();
         });
     }
 
@@ -128,72 +145,48 @@ export class Game {
     }
 
     setupMobileControls() {
+        const mobileControls = document.getElementById('mobile-controls');
         if (!this.isMobile) {
             // Hide mobile controls on desktop
-            const mobileControls = document.getElementById('mobile-controls');
-            if (mobileControls) {
-                mobileControls.style.display = 'none';
-            }
+            if (mobileControls) mobileControls.style.display = 'none';
             return;
         }
+        if (mobileControls) mobileControls.style.display = 'block';
 
-        // Show mobile controls
-        const mobileControls = document.getElementById('mobile-controls');
-        if (mobileControls) {
-            mobileControls.style.display = 'block';
-        }
+        // Pointer events give every finger its own id, so each thumb is tracked separately
+        // and the steering buttons follow the same "last pressed wins" rule as the keyboard.
+        // Keep receiving this finger's events even if it slides off the button.
+        // Capture can fail on some browsers; the press must still count.
+        const capturePointer = (el, e) => {
+            try { el.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+        };
+        const bindSteerButton = (id, dir) => {
+            const button = document.getElementById(id);
+            if (!button) return;
+            button.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                capturePointer(button, e);
+                this.steering.press(`pointer-${e.pointerId}`, dir);
+            });
+            const release = (e) => this.steering.release(`pointer-${e.pointerId}`);
+            button.addEventListener('pointerup', release);
+            button.addEventListener('pointercancel', release);
+            button.addEventListener('lostpointercapture', release);
+        };
+        bindSteerButton('left-arrow', LEFT);
+        bindSteerButton('right-arrow', RIGHT);
 
-        const leftArrow = document.getElementById('left-arrow');
-        const rightArrow = document.getElementById('right-arrow');
         const dashButton = document.getElementById('dash-button');
-
-        // Left arrow button
-        if (leftArrow) {
-            leftArrow.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                const left = this.controlsInverted;
-                this.input[left ? 'right' : 'left'] = true;
-            });
-
-            leftArrow.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.left = false;
-                this.input.right = false;
-            });
-        }
-
-        // Right arrow button
-        if (rightArrow) {
-            rightArrow.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                const left = this.controlsInverted;
-                this.input[left ? 'left' : 'right'] = true;
-            });
-
-            rightArrow.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.left = false;
-                this.input.right = false;
-            });
-        }
-
-        // Dash button
         if (dashButton) {
-            dashButton.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
+            dashButton.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                this.input.dash = true;
+                capturePointer(dashButton, e);
+                if (this.state === 'playing') this.input.dash = true;
             });
-
-            dashButton.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.dash = false;
-            });
+            const endDash = () => { this.input.dash = false; };
+            dashButton.addEventListener('pointerup', endDash);
+            dashButton.addEventListener('pointercancel', endDash);
+            dashButton.addEventListener('lostpointercapture', endDash);
         }
     }
 
@@ -236,6 +229,8 @@ export class Game {
         this.enemies = [];
         this.pendingEnemySpawns = [];  // Reset pending spawns
         this.gunProjectiles = [];  // Reset gun projectiles
+        this.tailTurret = new TailTurret();
+        this.powerupHint = null;
         this.particles = new ParticleSystem();
 
         this.lastTime = performance.now();
@@ -268,6 +263,11 @@ export class Game {
         const effectiveDelta = timeWarp ? deltaTime * 0.3 : deltaTime;
 
         // Update snake (uses normal deltaTime - timeWarp should NOT affect player)
+        // Resolve steering now, so the Virus inversion applies even to keys already held
+        const steer = this.steering.getDirection() * (this.controlsInverted ? -1 : 1);
+        this.input.left = steer < 0;
+        this.input.right = steer > 0;
+
         const levelMultiplier = (this.level - 1) * CONFIG.game.speedIncreasePerLevel;
         this.snake.update(deltaTime, this.input, levelMultiplier);
 
@@ -289,7 +289,7 @@ export class Game {
         // Magneto effect (normalized - uses player's normal time)
         if (this.snake.powerups.magneto.active) {
             const distance = this.food.position.distance(this.snake.head);
-            if (distance < 150) {
+            if (distance < MAGNETO_RANGE) {
                 const direction = this.snake.head.subtract(this.food.position).normalize();
                 this.food.position = this.food.position.add(direction.multiply(5 * frameMultiplier));
             }
@@ -343,6 +343,7 @@ export class Game {
             if (enemy instanceof Blindness && enemy.checkCollision(this.snake)) {
                 this.snake.blindness.active = true;
                 this.snake.blindness.duration = enemy.duration;
+                this.snake.blindness.total = enemy.duration;
                 enemy.lifetime = 0;
                 this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.adversePowerup, 20);
             }
@@ -383,8 +384,9 @@ export class Game {
             }
         });
 
-        // Turret shooting
+        // Tail turret: track the nearest target every frame (drives the visuals), fire on cadence
         if (this.snake.powerups.turret.active) {
+            this.tailTurret.update(this.snake, this.enemies, frameMultiplier);
             const now = Date.now();
             // Reduced fire rate to 1 second (1000ms)
             if (now - this.snake.powerups.turret.lastShot > CONFIG.gun.fireRate) {
@@ -407,6 +409,7 @@ export class Game {
             if (proj.target && proj.position.distance(proj.target.position) < proj.radius + 10) {
                 if (proj.target.hp !== undefined) {
                     proj.target.hp -= CONFIG.gun.damage;
+                    proj.target.hitFlashAt = performance.now();
                     if (proj.target.hp <= 0) {
                         this.enemiesKilled++;
                     }
@@ -490,6 +493,7 @@ export class Game {
         this.powerups.forEach(p => p.draw(this.ctx));
         this.enemies.forEach(e => {
             e.draw(this.ctx);
+            drawHitFlash(this.ctx, e);
             // Draw HP bars for turrets
             if (e instanceof Turret && e.hp > 0) {
                 this.ctx.save();
@@ -520,34 +524,117 @@ export class Game {
             }
         });
 
-        // Draw gun projectiles
-        this.gunProjectiles.forEach(proj => {
-            this.ctx.save();
-            this.ctx.fillStyle = CONFIG.colors.gunProjectile;
-            this.ctx.shadowBlur = 15;
-            this.ctx.shadowColor = CONFIG.colors.gunProjectile;
-            this.ctx.beginPath();
-            this.ctx.arc(proj.position.x, proj.position.y, proj.radius, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.restore();
-        });
+        this.gunProjectiles.forEach(proj => drawTurretShot(this.ctx, proj));
 
+        const turretActive = this.snake.powerups.turret.active;
+        const turretVisibility = turretActive ? this.snake.effectVisibility('turret', 0.35) : 0;
+        if (turretActive) this.tailTurret.drawRange(this.ctx, this.snake, turretVisibility);
+
+        this.drawMagnetoField();
         this.snake.draw(this.ctx);
-        this.particles.draw(this.ctx);
-
-        // Blindness vignette overlay (60% vision reduction)
-        if (this.snake && this.snake.blindness.active) {
-            const gradient = this.ctx.createRadialGradient(
-                this.snake.head.x, this.snake.head.y, 100,
-                this.snake.head.x, this.snake.head.y, CONFIG.canvas.width / 2
-            );
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.2)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');  // 60% darkness
-
-            this.ctx.fillStyle = gradient;
-            this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        if (turretActive) {
+            this.tailTurret.draw(this.ctx, this.snake, this.snake.powerups.turret.lastShot, turretVisibility);
         }
+        this.particles.draw(this.ctx);
+        this.drawTimeWarpTint();
+        this.drawGhostEndingWarning();
+        this.drawPowerupHint();
+
+        // Blindness: darkness outside the vision radius
+        if (this.snake && this.snake.blindness.active) {
+            this.drawBlindness();
+        }
+    }
+
+    // Magneto: animated dashed field line pulling the food toward the head while it is in range
+    drawMagnetoField() {
+        const magneto = this.snake.powerups.magneto;
+        if (!magneto.active) return;
+        const food = this.food.position;
+        const head = this.snake.head;
+        if (food.distance(head) >= MAGNETO_RANGE) return;
+
+        const color = ICONS.magneto.color;
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.7 * this.snake.effectVisibility('magneto', 0.25);
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.setLineDash([4, 8]);
+        this.ctx.lineDashOffset = Date.now() * 0.06;  // dashes flow from the food to the head
+        // Two slightly bowed lines read as a field rather than a rope
+        const mid = { x: (food.x + head.x) / 2, y: (food.y + head.y) / 2 };
+        const nx = -(head.y - food.y) * 0.18;
+        const ny = (head.x - food.x) * 0.18;
+        [1, -1].forEach(side => {
+            this.ctx.beginPath();
+            this.ctx.moveTo(food.x, food.y);
+            this.ctx.quadraticCurveTo(mid.x + nx * side, mid.y + ny * side, head.x, head.y);
+            this.ctx.stroke();
+        });
+        this.ctx.restore();
+    }
+
+    // Time Warp: a cool tint over the arena while the world is slowed; it flickers before ending
+    drawTimeWarpTint() {
+        if (!this.snake.powerups.timeWarp.active) return;
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.07 * this.snake.effectVisibility('timeWarp', 0.15);
+        this.ctx.fillStyle = ICONS.timeWarp.color;
+        this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        this.ctx.restore();
+    }
+
+    // Ghost is the one effect whose end can kill you (inside a turret or your own body),
+    // so its last second also pulses the arena edges red.
+    drawGhostEndingWarning() {
+        const ghost = this.snake.powerups.ghost;
+        if (!ghost.active || ghost.duration > 1000) return;
+        const { width, height } = CONFIG.canvas;
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.025);
+        const edge = this.ctx.createRadialGradient(width / 2, height / 2, height * 0.45, width / 2, height / 2, width * 0.65);
+        edge.addColorStop(0, 'rgba(255, 77, 109, 0)');
+        edge.addColorStop(1, `rgba(255, 77, 109, ${0.12 + pulse * 0.13})`);
+        this.ctx.save();
+        this.ctx.fillStyle = edge;
+        this.ctx.fillRect(0, 0, width, height);
+        this.ctx.restore();
+    }
+
+    // Blindness: everything outside a small circle around the head is fully dark,
+    // so food, power-ups, enemies and spawn warnings out there cannot be seen.
+    drawBlindness() {
+        const { blindness, head } = this.snake;
+        const visionR = CONFIG.game.blindnessVisionRadius;
+        const fade = 400;  // ms to fade the darkness in and out
+        const elapsed = (blindness.total || blindness.duration) - blindness.duration;
+        const strength = Math.max(0, Math.min(1, elapsed / fade, blindness.duration / fade));
+        const darkness = strength;
+
+        const gradient = this.ctx.createRadialGradient(head.x, head.y, visionR * 0.55, head.x, head.y, visionR);
+        gradient.addColorStop(0, 'rgba(2, 2, 8, 0)');
+        gradient.addColorStop(1, `rgba(2, 2, 8, ${darkness})`);
+
+        this.ctx.save();
+        // Clear vision inside the circle, soft edge, then solid darkness to the borders
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = `rgba(2, 2, 8, ${darkness})`;
+        this.ctx.beginPath();
+        this.ctx.rect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2, true);
+        this.ctx.fill('evenodd');
+
+        // Faint red rim marks the edge of vision
+        this.ctx.strokeStyle = `rgba(255, 77, 109, ${0.35 * strength})`;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
     eatFood() {
@@ -620,8 +707,62 @@ export class Game {
         this.showToast('¡Nuevo nivel récord!', `+${CONFIG.game.newLevelBonus} monedas`, 'success', 2200);
     }
 
+    // The first few times a power-up is collected, a short label above the head says what it does
+    maybeShowPowerupHint(type) {
+        let seen = {};
+        try {
+            seen = JSON.parse(localStorage.getItem(HINTS_STORAGE_KEY) || '{}');
+        } catch { /* corrupted or blocked storage: show the hint */ }
+
+        if ((seen[type] || 0) >= HINT_TIMES) return;
+        seen[type] = (seen[type] || 0) + 1;
+        try {
+            localStorage.setItem(HINTS_STORAGE_KEY, JSON.stringify(seen));
+        } catch { /* storage unavailable */ }
+
+        this.powerupHint = { type, start: performance.now() };
+    }
+
+    drawPowerupHint() {
+        const hint = this.powerupHint;
+        if (!hint) return;
+        const age = performance.now() - hint.start;
+        if (age > HINT_DURATION_MS) {
+            this.powerupHint = null;
+            return;
+        }
+
+        const icon = ICONS[hint.type];
+        const fade = Math.min(1, age / 180, (HINT_DURATION_MS - age) / 300);
+        const rise = (1 - Math.min(1, age / 250)) * 8;
+        const x = this.snake.head.x;
+        const y = this.snake.head.y - 46 + rise;
+        const text = `${icon.label} · ${icon.hint}`;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = fade;
+        this.ctx.font = '700 13px Montserrat, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        const w = this.ctx.measureText(text).width + 22;
+        const left = Math.max(4, Math.min(CONFIG.canvas.width - w - 4, x - w / 2));
+
+        this.ctx.fillStyle = 'rgba(8, 8, 24, 0.85)';
+        this.ctx.strokeStyle = icon.color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        this.ctx.roundRect(left, y - 13, w, 26, 13);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillText(text, left + w / 2, y + 1);
+        this.ctx.restore();
+    }
+
     collectPowerup(powerup) {
         this.particles.emit(powerup.position.x, powerup.position.y, CONFIG.colors.powerup, 25);
+        this.maybeShowPowerupHint(powerup.type);
 
         const duration = this.shopSystem.getPowerupDuration(powerup.type);
 
@@ -784,35 +925,21 @@ export class Game {
     }
 
     shootFromTail() {
-        if (this.snake.segments.length < 2 || this.enemies.length === 0) return;
+        if (this.snake.segments.length < 2) return;
 
         const tail = this.snake.segments[this.snake.segments.length - 1];
+        const target = this.tailTurret.findTarget(tail, this.enemies);
+        if (!target) return;
 
-        let nearest = null;
-        let minDist = Infinity;
-
-        // Only target killable entities (exclude Virus and Blindness)
-        this.enemies.forEach(enemy => {
-            if (enemy instanceof Virus || enemy instanceof Blindness) return;  // Skip adverse powerups
-
-            const dist = tail.distance(enemy.position);
-            if (dist < minDist && dist < 300) {
-                minDist = dist;
-                nearest = enemy;
-            }
+        const direction = target.position.subtract(tail).normalize();
+        this.gunProjectiles.push({
+            position: new Vector2(tail.x, tail.y),
+            velocity: direction.multiply(CONFIG.gun.projectileSpeed),
+            target,
+            radius: CONFIG.gun.projectileRadius,
+            lifetime: 1000
         });
-
-        if (nearest) {
-            // Create visual projectile
-            const direction = nearest.position.subtract(tail).normalize();
-            this.gunProjectiles.push({
-                position: new Vector2(tail.x, tail.y),
-                velocity: direction.multiply(CONFIG.gun.projectileSpeed),
-                target: nearest,
-                radius: CONFIG.gun.projectileRadius,
-                lifetime: 1000
-            });
-        }
+        this.tailTurret.onFire();
     }
 
     gameOver() {
@@ -899,7 +1026,7 @@ export class Game {
             Object.keys(this.snake.powerups).forEach(key => {
                 const powerup = this.snake.powerups[key];
                 if (powerup.active) {
-                    chips.push({ key, time: Math.ceil(powerup.duration / 1000) });
+                    chips.push({ key, time: Math.ceil(powerup.duration / 1000), expiring: powerup.duration < EXPIRY_WARNING_MS });
                 }
             });
             if (this.controlsInverted) {
@@ -910,14 +1037,14 @@ export class Game {
             }
 
             // Rebuild only when the visible text changes, not every frame
-            const signature = chips.map(c => `${c.key}:${c.time}`).join('|');
+            const signature = chips.map(c => `${c.key}:${c.time}:${c.expiring ? 1 : 0}`).join('|');
             if (signature !== this.powerupSignature) {
                 this.powerupSignature = signature;
                 powerupsDiv.innerHTML = chips.map(c => {
                     const icon = ICONS[c.key];
                     const label = icon ? icon.label : c.key.toUpperCase();
                     const color = icon ? icon.color : CONFIG.colors.powerup;
-                    return `<div class="powerup-indicator${c.adverse ? ' adverse' : ''}" style="--icon-color: ${color}">` +
+                    return `<div class="powerup-indicator${c.adverse ? ' adverse' : ''}${c.expiring ? ' expiring' : ''}" style="--icon-color: ${color}">` +
                         `${iconSvg(c.key)}${label}<span>${c.time}s</span></div>`;
                 }).join('');
             }

@@ -21,12 +21,16 @@ export const CONFIG = {
         enemySpawnInterval: 5000,
         minLevelForTurrets: 2,  // Turrets only spawn from level 2+
         foodValue: 10,
+        // Pickups are collected slightly beyond their drawn size
+        foodPickupRangeMultiplier: 1.1,       // 20 px -> 22 px
+        powerupPickupRangeMultiplier: 1.05,   // 22 px -> 23.1 px
         coinValue: 1,
         hardModeLevel: 10,  // HARD MODE starts at level 10
         hardModeScoreMultiplier: 1.5,  // 1.5x points in HARD MODE
         hardModeCoinMultiplier: 2,  // 2x coins in HARD MODE
         hardModeBonus: 100,  // 100 coins for reaching HARD MODE
-        newLevelBonus: 50  // 50 coins for reaching a new personal best level
+        newLevelBonus: 50,  // 50 coins for reaching a new personal best level
+        blindnessVisionRadius: 170  // px of clear vision around the head while blinded
     },
     powerups: {
         spawnInterval: 15000,

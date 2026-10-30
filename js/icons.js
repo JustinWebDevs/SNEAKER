@@ -5,6 +5,7 @@
 export const ICONS = {
     ghost: {
         label: 'GHOST',
+        hint: 'Atraviesa enemigos y tu propio cuerpo',
         color: '#b69cff',
         paths: [
             'M5 21V11a7 7 0 0 1 14 0v10l-2.33-1.6L14.33 21 12 19.4 9.67 21 7.33 19.4z',
@@ -13,6 +14,7 @@ export const ICONS = {
     },
     timeWarp: {
         label: 'TIME WARP',
+        hint: 'Todo se ralentiza excepto tú',
         color: '#7df9ff',
         paths: [
             'M6 3h12M6 21h12',
@@ -22,6 +24,7 @@ export const ICONS = {
     },
     magneto: {
         label: 'MAGNETO',
+        hint: 'Atrae la comida cercana',
         color: '#ff5ae0',
         paths: [
             'M5 4h4.5v8a2.5 2.5 0 0 0 5 0V4H19v8a7 7 0 0 1-14 0z',
@@ -29,7 +32,8 @@ export const ICONS = {
         ]
     },
     turret: {
-        label: 'TURRET',
+        label: 'TORRETA DE COLA',
+        hint: 'Tu cola dispara sola a enemigos cercanos',
         color: '#5fb6ff',
         paths: [
             'M12 5.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13',
@@ -39,6 +43,7 @@ export const ICONS = {
     },
     cutTail: {
         label: 'CUT TAIL',
+        hint: 'Pierdes cola y eliminas a todos los enemigos',
         color: '#ffd23f',
         paths: [
             'M12 2.5l1.9 5.2 5.3-2.3-2.3 5.3 5.2 1.9-5.2 1.9 2.3 5.3-5.3-2.3L12 21.5l-1.9-5.2-5.3 2.3 2.3-5.3L1.9 12.6l5.2-1.9-2.3-5.3 5.3 2.3z'
@@ -46,6 +51,7 @@ export const ICONS = {
     },
     shield: {
         label: 'SHIELD',
+        hint: 'Invulnerable por unos segundos',
         color: '#3dffa8',
         paths: [
             'M12 2.5l7.5 3v5.5c0 5-3.2 8.6-7.5 10.5-4.3-1.9-7.5-5.5-7.5-10.5V5.5z',
