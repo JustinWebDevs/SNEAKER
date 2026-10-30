@@ -20,7 +20,7 @@ import { EXPIRY_WARNING_MS } from './render.js';
 const MAGNETO_RANGE = 150;  // px: food closer than this is pulled toward the head
 
 const HINTS_STORAGE_KEY = 'cyberSerpent_powerupHints';
-const HINT_TIMES = 3;           // pickups per power-up that still show its hint
+const HINT_TIMES = 1;           // pickups per power-up that still show its hint
 const HINT_DURATION_MS = 2600;
 
 export class Game {

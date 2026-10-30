@@ -56,7 +56,7 @@ export class PowerUp {
     }
 
     checkCollision(snake) {
-        const range = (this.radius + CONFIG.snake.segmentSize) * CONFIG.game.pickupRangeMultiplier;
+        const range = (this.radius + CONFIG.snake.segmentSize) * CONFIG.game.powerupPickupRangeMultiplier;
         return this.position.distance(snake.head) < range;
     }
 

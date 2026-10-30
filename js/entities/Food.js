@@ -47,7 +47,7 @@ export class Food {
     }
 
     checkCollision(snake) {
-        const range = (this.radius + CONFIG.snake.segmentSize) * CONFIG.game.pickupRangeMultiplier;
+        const range = (this.radius + CONFIG.snake.segmentSize) * CONFIG.game.foodPickupRangeMultiplier;
         return this.position.distance(snake.head) < range;
     }
 }
