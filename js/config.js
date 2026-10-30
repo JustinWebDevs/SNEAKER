@@ -88,6 +88,8 @@ export const CONFIG = {
             headColor: '#00ffff',
             unlocked: true,
             drawStyle: {
+                bands: ['#00e5ff', '#00e5ff', '#7df9ff', '#00b8d4'],
+                bandLength: 2,
                 body: 'solid',
                 highlight: 'rgba(255,255,255,0.25)',
                 scalePattern: 'dots',
@@ -105,6 +107,8 @@ export const CONFIG = {
             headColor: '#ff2200',
             price: 300,
             drawStyle: {
+                bands: ['#ff3d00', '#ff6a00', '#ff9500', '#ffc400', '#ff9500', '#ff6a00'],
+                bandLength: 2,
                 body: 'gradient',
                 gradientColors: ['#ff6600', '#ffee00'],
                 highlight: 'rgba(255,220,0,0.3)',
@@ -123,6 +127,8 @@ export const CONFIG = {
             headColor: '#888888',
             price: 300,
             drawStyle: {
+                bands: ['#c9ced6', '#c9ced6', '#c9ced6', '#4a5260'],
+                bandLength: 1,
                 body: 'striped',
                 stripeColor: 'rgba(0,0,0,0.3)',
                 stripeWidth: 3,
@@ -142,6 +148,8 @@ export const CONFIG = {
             headColor: '#7b2cbf',
             code: 'm3rcy',
             drawStyle: {
+                bands: ['#e0aaff', '#c77dff', '#9d4edd', '#7b2cbf', '#9d4edd', '#c77dff'],
+                bandLength: 2,
                 body: 'gradient',
                 gradientColors: ['#c77dff', '#7b2cbf'],
                 highlight: 'rgba(224,170,255,0.3)',
@@ -160,6 +168,8 @@ export const CONFIG = {
             headColor: '#ffb700',
             mission: 'reach_level_10',
             drawStyle: {
+                bands: ['#ffe14d', '#ffd700', '#ffb700', '#fff1a8', '#ffb700', '#ffd700'],
+                bandLength: 2,
                 body: 'gradient',
                 gradientColors: ['#ffd700', '#aa6600'],
                 highlight: 'rgba(255,255,200,0.5)',
@@ -178,6 +188,8 @@ export const CONFIG = {
             headColor: '#0f0f1e',
             mission: 'score_10000',
             drawStyle: {
+                bands: ['#1d1d3a', '#1d1d3a', '#2a2a66', '#3d3dbb'],
+                bandLength: 2,
                 body: 'solid',
                 highlight: 'rgba(80,80,220,0.2)',
                 scalePattern: 'diamond',
@@ -195,6 +207,8 @@ export const CONFIG = {
             headColor: '#00cc55',
             code: 'w1s3v1l',
             drawStyle: {
+                bands: ['#00ff88', '#00e07a', '#00b862', '#7dffc4'],
+                bandLength: 2,
                 body: 'gradient',
                 gradientColors: ['#00ff88', '#006633'],
                 highlight: 'rgba(100,255,180,0.3)',
@@ -213,6 +227,8 @@ export const CONFIG = {
             headColor: '#e8e8e8',
             code: 'm000000b',
             drawStyle: {
+                bands: ['#f4f4f4'],
+                bandLength: 1,
                 body: 'spotted',
                 spotColor: '#1a1a1a',
                 highlight: 'rgba(255,255,255,0.4)',

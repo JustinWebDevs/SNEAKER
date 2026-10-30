@@ -1,0 +1,238 @@
+<Rive version="1" kind="fragment">
+    <!-- In-game HUD. The game writes score, level, energy (0-100) and hardMode into the Hud view model. -->
+    <Artboard defaultStateMachineId="3:90" viewModelId="1:20" viewModelInstanceId="1:30" styleId="3:2"
+              width="460" height="150" x="0" y="300" name="Hud" id="3:1">
+        <LayoutComponentStyle name="Hud Style" id="3:2"/>
+
+        <!-- labels and values (first declared paints on top) -->
+        <Text x="34" y="22" name="Score Label">
+            <TextStylePaint fontSize="13" letterSpacing="3" fontAssetId="1:1" familyName="Montserrat" styleName="Bold" name="Label Style" id="3:20">
+                <TextStyleAxis tag="2003265652" axisValue="700" name="Weight"/>
+                <Fill name="Fill"><SolidColor colorValue="B300E5FF" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:20" text="SCORE" name="Run"/>
+        </Text>
+        <Text x="34" y="38" name="Score Value">
+            <TextStylePaint fontSize="40" fontAssetId="1:1" familyName="Montserrat" styleName="ExtraBold" name="Value Style" id="3:21">
+                <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="99FFD23F" name="C"/>
+                    <Feather strength="10" name="F"/>
+                </Fill>
+                <Fill name="Face"><SolidColor colorValue="FFFFF1A8" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:21" text="0" name="Score Run">
+                <DataBindContext sourcePathIds="1:20-1:21" propertyKey="268" converterId="1:12"/>
+            </TextValueRun>
+        </Text>
+
+        <Text x="290" y="22" name="Level Label">
+            <TextStylePaint fontSize="13" letterSpacing="3" fontAssetId="1:1" familyName="Montserrat" styleName="Bold" name="Label Style 2" id="3:22">
+                <TextStyleAxis tag="2003265652" axisValue="700" name="Weight"/>
+                <Fill name="Fill"><SolidColor colorValue="B300E5FF" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:22" text="NIVEL" name="Run"/>
+        </Text>
+        <Text x="290" y="38" name="Level Value">
+            <TextStylePaint fontSize="40" fontAssetId="1:1" familyName="Montserrat" styleName="ExtraBold" name="Level Style" id="3:23">
+                <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="99FFD23F" name="C"/>
+                    <Feather strength="10" name="F"/>
+                </Fill>
+                <Fill name="Face"><SolidColor colorValue="FFFFF1A8" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:23" text="1" name="Level Run">
+                <DataBindContext sourcePathIds="1:20-1:22" propertyKey="268" converterId="1:10"/>
+            </TextValueRun>
+        </Text>
+
+        <Text x="350" y="56" opacity="0" name="Hard Badge" id="3:40">
+            <TextStylePaint fontSize="11" letterSpacing="1.5" fontAssetId="1:1" familyName="Montserrat" styleName="Black" name="Badge Style" id="3:24">
+                <TextStyleAxis tag="2003265652" axisValue="900" name="Weight"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="FFFF2BD6" name="C"/>
+                    <Feather strength="8" name="F"/>
+                </Fill>
+                <Fill name="Face"><SolidColor colorValue="FFFFC2F3" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:24" text="HARD MODE" name="Run"/>
+        </Text>
+
+        <Text x="34" y="103" name="Dash Label">
+            <TextStylePaint fontSize="13" letterSpacing="3" fontAssetId="1:1" familyName="Montserrat" styleName="Bold" name="Label Style 3" id="3:25">
+                <TextStyleAxis tag="2003265652" axisValue="700" name="Weight"/>
+                <Fill name="Fill"><SolidColor colorValue="B300E5FF" name="C"/></Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="3:25" text="DASH" name="Run"/>
+        </Text>
+
+        <!-- dash energy bar: fill width is bound to energy through a 0-100 to 0-300 mapper -->
+        <Shape x="110" y="111" name="Energy Fill">
+            <Rectangle width="210" height="10" originX="0" originY="0.5"
+                       cornerRadiusTL="5" cornerRadiusTR="5" cornerRadiusBL="5" cornerRadiusBR="5" name="Path">
+                <DataBindContext sourcePathIds="1:20-1:23" propertyKey="20" converterId="1:13"/>
+            </Rectangle>
+            <Stroke thickness="6" name="Glow">
+                <SolidColor colorValue="0000E5FF" name="C" id="3:52"/>
+                <Feather strength="8" name="F"/>
+            </Stroke>
+            <Fill name="Fill">
+                <LinearGradient startX="0" startY="0" endX="300" endY="0" name="G">
+                    <GradientStop colorValue="FF00E5FF" position="0"/>
+                    <GradientStop colorValue="FF2B7BFF" position="0.6"/>
+                    <GradientStop colorValue="FFFF2BD6" position="1"/>
+                </LinearGradient>
+            </Fill>
+        </Shape>
+        <Shape x="110" y="111" name="Energy Track">
+            <Rectangle width="300" height="10" originX="0" originY="0.5"
+                       cornerRadiusTL="5" cornerRadiusTR="5" cornerRadiusBL="5" cornerRadiusBR="5" name="Path"/>
+            <Fill name="Fill"><SolidColor colorValue="FF101428" name="C"/></Fill>
+            <Stroke thickness="1" name="Edge"><SolidColor colorValue="4400E5FF" name="C"/></Stroke>
+        </Shape>
+
+        <!-- glass panel -->
+        <Shape x="230" y="75" name="Panel">
+            <Rectangle width="440" height="130" originX="0.5" originY="0.5"
+                       cornerRadiusTL="18" cornerRadiusTR="18" cornerRadiusBL="18" cornerRadiusBR="18" name="Path"/>
+            <Stroke thickness="4" name="Glow">
+                <SolidColor colorValue="8800E5FF" name="C" id="3:13"/>
+                <Feather strength="10" name="F"/>
+            </Stroke>
+            <Fill name="Glass">
+                <LinearGradient startX="0" startY="-65" endX="0" endY="65" name="G">
+                    <GradientStop colorValue="E6141A36" position="0"/>
+                    <GradientStop colorValue="E60A0A1E" position="1"/>
+                </LinearGradient>
+            </Fill>
+            <Stroke thickness="1.5" name="Edge">
+                <SolidColor colorValue="FF00E5FF" name="C" id="3:14"/>
+            </Stroke>
+        </Shape>
+
+        <LinearAnimation loopValue="loop" duration="60" name="Normal" id="3:60">
+            <KeyedObject objectId="3:13">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="8800E5FF" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="3:14">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="FF00E5FF" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="3:40">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation loopValue="loop" duration="70" name="Hard" id="3:61">
+            <KeyedObject objectId="3:13">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="FFFF2BD6" frame="0" interpolationType="linear"/>
+                    <KeyFrameColor value="55FF2BD6" frame="35" interpolationType="linear"/>
+                    <KeyFrameColor value="FFFF2BD6" frame="70" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="3:14">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="FFFF2BD6" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="3:40">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="0.45" frame="35" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="70" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation loopValue="loop" duration="60" name="Charging" id="3:62">
+            <KeyedObject objectId="3:52">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="0000E5FF" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation loopValue="loop" duration="50" name="Ready" id="3:63">
+            <KeyedObject objectId="3:52">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="FF00E5FF" frame="0" interpolationType="linear"/>
+                    <KeyFrameColor value="33FF2BD6" frame="25" interpolationType="linear"/>
+                    <KeyFrameColor value="FF00E5FF" frame="50" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <StateMachine name="Hud SM" id="3:90">
+            <StateMachineLayer name="Mode" id="3:91">
+                <AnyState x="0" y="-150"/>
+                <ExitState x="500" y="-150"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="3:92"/>
+                </EntryState>
+                <AnimationState animationId="3:60" x="200" y="0" id="3:92">
+                    <StateTransition stateToId="3:93" duration="250">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean>
+                                    <DataBindContext sourcePathIds="1:20-1:24" propertyKey="634"/>
+                                </BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="true"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="3:61" x="400" y="100" id="3:93">
+                    <StateTransition stateToId="3:92" duration="250">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean>
+                                    <DataBindContext sourcePathIds="1:20-1:24" propertyKey="634"/>
+                                </BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="false"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+
+            <StateMachineLayer name="Dash" id="3:94">
+                <AnyState x="0" y="-150"/>
+                <ExitState x="500" y="-150"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="3:95"/>
+                </EntryState>
+                <AnimationState animationId="3:62" x="200" y="0" id="3:95">
+                    <StateTransition stateToId="3:96" duration="150">
+                        <TransitionViewModelCondition opValue="greaterThanOrEqual">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="1:20-1:23" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="100"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="3:63" x="400" y="100" id="3:96">
+                    <StateTransition stateToId="3:95" duration="150">
+                        <TransitionViewModelCondition opValue="lessThan">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="1:20-1:23" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="100"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+</Rive>

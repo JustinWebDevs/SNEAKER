@@ -1,0 +1,7 @@
+name: sneaker-ui
+main: Logo
+output:
+  dir: ../assets/rive
+logs:
+  file: build/rive.log
+  problems: build/problems.log

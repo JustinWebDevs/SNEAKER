@@ -11,6 +11,8 @@ import { ParticleSystem } from './systems/ParticleSystem.js';
 import { ProgressionSystem } from './systems/ProgressionSystem.js';
 import { SkinSystem } from './systems/SkinSystem.js';
 import { ShopSystem } from './systems/ShopSystem.js';
+import { RiveUI } from './systems/RiveUI.js';
+import { ICONS, iconSvg, hydrateIcons } from './icons.js';
 
 export class Game {
     constructor() {
@@ -40,6 +42,8 @@ export class Game {
         this.skinSystem = new SkinSystem(this.progressionSystem);
         this.shopSystem = new ShopSystem(this.progressionSystem, this.skinSystem);
         this.particles = new ParticleSystem();
+        this.riveUI = new RiveUI();
+        this.gridLayer = this.createGridLayer();
 
         // Game entities
         this.snake = null;
@@ -61,6 +65,7 @@ export class Game {
         // Mobile controls
         this.isMobile = this.detectMobile();
 
+        hydrateIcons();
         this.setupEventListeners();
         this.setupMobileControls();
         this.skinSystem.initializePreview('preview-canvas');
@@ -238,6 +243,8 @@ export class Game {
         this.lastPowerupSpawn = 0;
         this.controlsInverted = false;
         this.controlsInvertedTimer = 0;
+
+        this.riveUI.showScreen('playing');
 
         this.updateUI();
         this.gameLoop(this.lastTime);
@@ -424,25 +431,57 @@ export class Game {
         this.updateUI();
     }
 
-    draw() {
-        this.ctx.fillStyle = 'rgba(10, 10, 30, 0.3)';
-        this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+    // Pre-render the arena floor (grid, major lines, vignette) once instead of stroking it every frame
+    createGridLayer() {
+        const { width, height } = CONFIG.canvas;
+        const layer = document.createElement('canvas');
+        layer.width = width;
+        layer.height = height;
+        const g = layer.getContext('2d');
 
-        // Grid
-        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.05)';
-        this.ctx.lineWidth = 1;
-        for (let i = 0; i < CONFIG.canvas.width; i += 40) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(i, 0);
-            this.ctx.lineTo(i, CONFIG.canvas.height);
-            this.ctx.stroke();
+        g.lineWidth = 1;
+        for (let i = 0; i <= width; i += 40) {
+            g.strokeStyle = i % 200 === 0 ? 'rgba(0, 229, 255, 0.11)' : 'rgba(0, 229, 255, 0.04)';
+            g.beginPath();
+            g.moveTo(i + 0.5, 0);
+            g.lineTo(i + 0.5, height);
+            g.stroke();
         }
-        for (let i = 0; i < CONFIG.canvas.height; i += 40) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, i);
-            this.ctx.lineTo(CONFIG.canvas.width, i);
-            this.ctx.stroke();
+        for (let i = 0; i <= height; i += 40) {
+            g.strokeStyle = i % 200 === 0 ? 'rgba(255, 43, 214, 0.10)' : 'rgba(0, 229, 255, 0.04)';
+            g.beginPath();
+            g.moveTo(0, i + 0.5);
+            g.lineTo(width, i + 0.5);
+            g.stroke();
         }
+
+        // Small crosses at major intersections
+        g.strokeStyle = 'rgba(125, 249, 255, 0.25)';
+        for (let x = 200; x < width; x += 200) {
+            for (let y = 200; y < height; y += 200) {
+                g.beginPath();
+                g.moveTo(x - 4, y + 0.5);
+                g.lineTo(x + 5, y + 0.5);
+                g.moveTo(x + 0.5, y - 4);
+                g.lineTo(x + 0.5, y + 5);
+                g.stroke();
+            }
+        }
+
+        const vignette = g.createRadialGradient(width / 2, height / 2, height * 0.35, width / 2, height / 2, width * 0.7);
+        vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignette.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        g.fillStyle = vignette;
+        g.fillRect(0, 0, width, height);
+
+        return layer;
+    }
+
+    draw() {
+        // Translucent clear keeps short motion trails behind moving entities
+        this.ctx.fillStyle = 'rgba(8, 6, 22, 0.35)';
+        this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        this.ctx.drawImage(this.gridLayer, 0, 0);
 
         // Draw pending spawn warnings (before other entities so they appear behind)
         this.drawPendingSpawns();
@@ -557,50 +596,28 @@ export class Game {
         }
     }
 
-    showHardModeNotification() {
-        // Visual notification for HARD MODE
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 0, 255, 0.9);
-            border: 3px solid #ff00ff;
-            border-radius: 15px;
-            padding: 2rem;
-            font-size: 2rem;
-            color: #fff;
-            text-shadow: 0 0 20px #ff00ff;
-            z-index: 10000;
-            animation: pulse 0.5s ease-in-out 3;
-        `;
-        notification.textContent = `🔥 HARD MODE ACTIVADO 🔥\n+${CONFIG.game.hardModeBonus} MONEDAS`;
-        document.body.appendChild(notification);
+    // Animated toast; variant picks the accent color (see .toast-* in styles.css)
+    showToast(title, subtitle = '', variant = 'info', duration = 2500) {
+        const container = document.getElementById('toasts');
+        if (!container) return;
 
-        setTimeout(() => notification.remove(), 3000);
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${variant}`;
+        toast.innerHTML = `<strong>${title}</strong>${subtitle ? `<span>${subtitle}</span>` : ''}`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('leaving');
+            toast.addEventListener('animationend', () => toast.remove(), { once: true });
+        }, duration);
+    }
+
+    showHardModeNotification() {
+        this.showToast(`${iconSvg('flame')} HARD MODE ACTIVADO`, `+${CONFIG.game.hardModeBonus} monedas`, 'hard', 3000);
     }
 
     showNewLevelBonus() {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 255, 0, 0.9);
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            padding: 1rem 2rem;
-            font-size: 1.5rem;
-            color: #fff;
-            text-shadow: 0 0 10px #00ff00;
-            z-index: 10000;
-        `;
-        notification.textContent = `🎉 ¡Nuevo Nivel! +${CONFIG.game.newLevelBonus} Monedas`;
-        document.body.appendChild(notification);
-
-        setTimeout(() => notification.remove(), 2000);
+        this.showToast('¡Nuevo nivel récord!', `+${CONFIG.game.newLevelBonus} monedas`, 'success', 2200);
     }
 
     collectPowerup(powerup) {
@@ -737,6 +754,16 @@ export class Game {
             this.ctx.arc(spawn.position.x, spawn.position.y, currentRadius, 0, Math.PI * 2);
             this.ctx.stroke();
 
+            // Rotating dashed lock-on ring at full size
+            this.ctx.lineWidth = 1.5;
+            this.ctx.setLineDash([8, 8]);
+            this.ctx.lineDashOffset = -Date.now() * 0.05;
+            this.ctx.globalAlpha = 0.35 + progress * 0.4;
+            this.ctx.beginPath();
+            this.ctx.arc(spawn.position.x, spawn.position.y, maxRadius, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+
             // Inner crosshair
             this.ctx.globalAlpha = pulse;
             this.ctx.beginPath();
@@ -748,7 +775,7 @@ export class Game {
 
             // Warning text
             this.ctx.fillStyle = color;
-            this.ctx.font = '12px Orbitron';
+            this.ctx.font = '700 14px Montserrat, sans-serif';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('⚠', spawn.position.x, spawn.position.y - 25);
 
@@ -810,16 +837,15 @@ export class Game {
         document.getElementById('final-level').textContent = this.level;
         document.getElementById('coins-earned').textContent = Math.floor(coinsEarned);
         document.getElementById('game-over').classList.add('active');
+        this.riveUI.showScreen('gameover');
 
         // Show mission completions
         if (newUnlocks && Array.isArray(newUnlocks) && newUnlocks.length > 0) {
-            setTimeout(() => {
-                let message = '¡Misiones completadas!\n\n';
-                newUnlocks.forEach(unlock => {
-                    message += `${unlock.mission}: Skin "${unlock.skin}" desbloqueada!\n`;
-                });
-                alert(message);
-            }, 500);
+            newUnlocks.forEach((unlock, i) => {
+                setTimeout(() => {
+                    this.showToast(`Misión completada: ${unlock.mission}`, `Skin "${unlock.skin}" desbloqueada`, 'success', 4000);
+                }, 600 + i * 400);
+            });
         }
     }
 
@@ -849,8 +875,7 @@ export class Game {
 
     updateUI() {
         document.getElementById('score').textContent = this.score;
-        const levelText = this.isHardMode ? `${this.level} 🔥 HARD MODE` : this.level;
-        document.getElementById('level').textContent = levelText;
+        document.getElementById('level').innerHTML = this.isHardMode ? `${this.level} ${iconSvg('flame')} HARD MODE` : this.level;
         document.getElementById('high-score').textContent = this.progressionSystem.getStats().maxScore;
         this.shopSystem.updateCoinsDisplay();
 
@@ -859,27 +884,42 @@ export class Game {
             energyFill.style.width = `${this.snake.dashEnergy}%`;
         }
 
+        if (this.snake) {
+            this.riveUI.updateHud({
+                score: this.score,
+                level: this.level,
+                energy: this.snake.dashEnergy,
+                hardMode: this.isHardMode
+            });
+        }
+
         const powerupsDiv = document.getElementById('active-powerups');
         if (powerupsDiv && this.snake) {
-            powerupsDiv.innerHTML = '';
+            const chips = [];
             Object.keys(this.snake.powerups).forEach(key => {
-                if (this.snake.powerups[key].active) {
-                    const div = document.createElement('div');
-                    div.className = 'powerup-indicator';
-                    const time = Math.ceil(this.snake.powerups[key].duration / 1000);
-                    div.textContent = `${key.toUpperCase()} (${time}s)`;
-                    powerupsDiv.appendChild(div);
+                const powerup = this.snake.powerups[key];
+                if (powerup.active) {
+                    chips.push({ key, time: Math.ceil(powerup.duration / 1000) });
                 }
             });
-
             if (this.controlsInverted) {
-                const div = document.createElement('div');
-                div.className = 'powerup-indicator';
-                div.style.borderColor = '#ff0000';
-                div.style.color = '#ff0000';
-                const time = Math.ceil(this.controlsInvertedTimer / 1000);
-                div.textContent = `INVERTED (${time}s)`;
-                powerupsDiv.appendChild(div);
+                chips.push({ key: 'virus', time: Math.ceil(this.controlsInvertedTimer / 1000), adverse: true });
+            }
+            if (this.snake.blindness.active) {
+                chips.push({ key: 'blindness', time: Math.ceil(this.snake.blindness.duration / 1000), adverse: true });
+            }
+
+            // Rebuild only when the visible text changes, not every frame
+            const signature = chips.map(c => `${c.key}:${c.time}`).join('|');
+            if (signature !== this.powerupSignature) {
+                this.powerupSignature = signature;
+                powerupsDiv.innerHTML = chips.map(c => {
+                    const icon = ICONS[c.key];
+                    const label = icon ? icon.label : c.key.toUpperCase();
+                    const color = icon ? icon.color : CONFIG.colors.powerup;
+                    return `<div class="powerup-indicator${c.adverse ? ' adverse' : ''}" style="--icon-color: ${color}">` +
+                        `${iconSvg(c.key)}${label}<span>${c.time}s</span></div>`;
+                }).join('');
             }
         }
     }
@@ -888,24 +928,28 @@ export class Game {
         this.hideAllMenus();
         this.state = 'menu';
         document.getElementById('main-menu').classList.add('active');
+        this.riveUI.showScreen('menu');
         this.updateUI();
     }
 
     showShop() {
         this.hideAllMenus();
         document.getElementById('shop-menu').classList.add('active');
+        this.riveUI.showScreen('other');
         this.shopSystem.renderShop();
     }
 
     showInventory() {
         this.hideAllMenus();
         document.getElementById('inventory-menu').classList.add('active');
+        this.riveUI.showScreen('other');
         this.renderInventory();
     }
 
     showControls() {
         this.hideAllMenus();
         document.getElementById('controls-menu').classList.add('active');
+        this.riveUI.showScreen('other');
     }
 
     hideAllMenus() {
@@ -937,18 +981,22 @@ export class Game {
 
             const div = document.createElement('div');
             const isEquipped = currentSkin === skinId;
-            div.className = 'shop-item' + (isEquipped ? ' owned' : '');
-            div.style.borderColor = skinData.bodyColor;
+            div.className = 'shop-item skin-card' + (isEquipped ? ' owned equipped' : '');
+            div.style.setProperty('--skin-color', skinData.glowColor || skinData.bodyColor);
 
             div.innerHTML = `
-                <h3 style="color: ${skinData.bodyColor}">${skinData.name}</h3>
-                <button ${isEquipped ? 'disabled' : ''} 
-                        onmouseover="game.skinSystem.startPreviewAnimation('${skinId}')"
+                <canvas class="skin-thumb"></canvas>
+                <h3>${skinData.name}</h3>
+                <button ${isEquipped ? 'disabled' : ''}
                         onclick="game.skinSystem.equipSkin('${skinId}') && game.renderInventory() && game.updateEquippedSkinName()">
                     ${isEquipped ? 'EQUIPADA' : 'EQUIPAR'}
                 </button>
             `;
+            // Hovering a card previews it on the stage; leaving returns to the equipped skin
+            div.addEventListener('mouseenter', () => this.skinSystem.startPreviewAnimation(skinId));
+            div.addEventListener('mouseleave', () => this.skinSystem.startPreviewAnimation(this.skinSystem.getCurrentSkin()));
             container.appendChild(div);
+            this.skinSystem.drawThumb(div.querySelector('.skin-thumb'), skinId);
         });
 
         this.updateEquippedSkinName();
@@ -975,28 +1023,14 @@ export class Game {
 
         missions.forEach(mission => {
             const div = document.createElement('div');
-            div.style.cssText = `
-                padding: 1rem;
-                margin: 0.5rem 0;
-                background: rgba(0, 255, 255, 0.05);
-                border: 2px solid ${mission.completed ? '#00ff00' : '#00ffff'};
-                border-radius: 10px;
-            `;
+            div.className = 'mission-card' + (mission.completed ? ' completed' : '');
 
             div.innerHTML = `
-                <h4 style="color: ${mission.completed ? '#00ff00' : '#00ffff'}; margin: 0 0 0.5rem 0;">
-                    ${mission.name} ${mission.completed ? '✓' : ''}
-                </h4>
-                <p style="font-size: 0.9rem; margin: 0.3rem 0;">${mission.description}</p>
-                <p style="font-size: 0.85rem; color: #ffff00; margin: 0.3rem 0;">
-                    Recompensa: Skin ${CONFIG.skins[mission.reward]?.name || mission.reward}
-                </p>
-                <div style="background: rgba(0,0,0,0.3); border-radius: 5px; height: 8px; margin-top: 0.5rem; overflow: hidden;">
-                    <div style="background: linear-gradient(90deg, #00ffff, #00ff00); height: 100%; width: ${mission.progressPercent}%; transition: width 0.3s;"></div>
-                </div>
-                <p style="font-size: 0.8rem; margin: 0.3rem 0; text-align: right;">
-                    ${mission.progress} / ${mission.target}
-                </p>
+                <h4>${mission.name} ${mission.completed ? '✓' : ''}</h4>
+                <p class="mission-desc">${mission.description}</p>
+                <p class="mission-reward">Recompensa: Skin ${CONFIG.skins[mission.reward]?.name || mission.reward}</p>
+                <div class="mission-bar"><div style="width: ${mission.progressPercent}%"></div></div>
+                <p class="mission-progress">${mission.progress} / ${mission.target}</p>
             `;
 
             container.appendChild(div);
@@ -1013,7 +1047,7 @@ export class Game {
         const result = this.shopSystem.redeemCode(code);
 
         messageEl.textContent = result.message;
-        messageEl.style.color = result.success ? '#00ff00' : '#ff0000';
+        messageEl.style.color = result.success ? '#3dffa8' : '#ff4d6d';
 
         if (result.success) {
             input.value = '';

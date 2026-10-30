@@ -1,0 +1,132 @@
+<Rive version="1" kind="fragment">
+    <!-- Game-over title: slams in with an RGB-split glitch, then glitches now and then. -->
+    <Artboard defaultStateMachineId="4:90" styleId="4:2" width="760" height="200" x="0" y="600" name="GameOver" id="4:1">
+        <LayoutComponentStyle name="GameOver Style" id="4:2"/>
+
+        <Node x="380" y="100" opacity="0" scaleX="1.5" scaleY="1.5" name="Title Group" id="4:10">
+            <Text x="0" y="0" originX="0.5" originY="0.5" name="Main" id="4:13">
+                <TextStylePaint fontSize="96" letterSpacing="4" fontAssetId="1:1" familyName="Montserrat" styleName="Black" name="Main Style" id="4:23">
+                    <TextStyleAxis tag="2003265652" axisValue="900" name="Weight"/>
+                    <Fill fillRule="clockwise" name="Glow">
+                        <SolidColor colorValue="FFFF2BD6" name="C"/>
+                        <Feather strength="20" name="F"/>
+                    </Fill>
+                    <Fill name="Face">
+                        <LinearGradient startX="0" startY="10" endX="0" endY="110" name="G">
+                            <GradientStop colorValue="FFFFE3FA" position="0"/>
+                            <GradientStop colorValue="FFFF5AE0" position="1"/>
+                        </LinearGradient>
+                    </Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="4:23" text="GAME OVER" name="Run"/>
+            </Text>
+            <Text x="0" y="0" originX="0.5" originY="0.5" opacity="0.8" name="Split Cyan" id="4:12">
+                <TextStylePaint fontSize="96" letterSpacing="4" fontAssetId="1:1" familyName="Montserrat" styleName="Black" name="Cyan Style" id="4:22">
+                    <TextStyleAxis tag="2003265652" axisValue="900" name="Weight"/>
+                    <Fill name="Face"><SolidColor colorValue="FF00E5FF" name="C"/></Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="4:22" text="GAME OVER" name="Run"/>
+            </Text>
+            <Text x="0" y="0" originX="0.5" originY="0.5" opacity="0.8" name="Split Red" id="4:11">
+                <TextStylePaint fontSize="96" letterSpacing="4" fontAssetId="1:1" familyName="Montserrat" styleName="Black" name="Red Style" id="4:21">
+                    <TextStyleAxis tag="2003265652" axisValue="900" name="Weight"/>
+                    <Fill name="Face"><SolidColor colorValue="FFFF3355" name="C"/></Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="4:21" text="GAME OVER" name="Run"/>
+            </Text>
+        </Node>
+
+        <LinearAnimation loopValue="oneShot" duration="45" name="Slam" id="4:30">
+            <KeyedObject objectId="4:10">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="10" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleX">
+                    <KeyFrameDouble value="1.5" frame="0" interpolationType="cubic">
+                        <CubicEaseInterpolator x1="0.16" y1="1" x2="0.3" y2="1"/>
+                    </KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="24" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleY">
+                    <KeyFrameDouble value="1.5" frame="0" interpolationType="cubic">
+                        <CubicEaseInterpolator x1="0.16" y1="1" x2="0.3" y2="1"/>
+                    </KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="24" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="4:11">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="-18" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="10" frame="14" interpolationType="hold"/>
+                    <KeyFrameDouble value="-6" frame="20" interpolationType="hold"/>
+                    <KeyFrameDouble value="4" frame="27" interpolationType="hold"/>
+                    <KeyFrameDouble value="-2" frame="34" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="40" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="4:12">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="18" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="-10" frame="14" interpolationType="hold"/>
+                    <KeyFrameDouble value="6" frame="20" interpolationType="hold"/>
+                    <KeyFrameDouble value="-4" frame="27" interpolationType="hold"/>
+                    <KeyFrameDouble value="2" frame="34" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="40" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation loopValue="loop" duration="200" name="Glitch" id="4:31">
+            <KeyedObject objectId="4:11">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="-9" frame="150" interpolationType="hold"/>
+                    <KeyFrameDouble value="5" frame="154" interpolationType="hold"/>
+                    <KeyFrameDouble value="-3" frame="158" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="162" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="3" frame="150" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="158" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="4:12">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="9" frame="150" interpolationType="hold"/>
+                    <KeyFrameDouble value="-5" frame="154" interpolationType="hold"/>
+                    <KeyFrameDouble value="3" frame="158" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="162" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="-3" frame="150" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="158" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="4:13">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.55" frame="152" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="156" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <StateMachine name="GameOver SM" id="4:90">
+            <StateMachineLayer name="Title" id="4:91">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="600" y="-120"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="4:92"/>
+                </EntryState>
+                <AnimationState animationId="4:30" reset="true" x="200" y="0" id="4:92">
+                    <StateTransition stateToId="4:93" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100"/>
+                </AnimationState>
+                <AnimationState animationId="4:31" x="400" y="0" id="4:93"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+</Rive>

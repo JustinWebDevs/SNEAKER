@@ -1,5 +1,6 @@
 import { Vector2, randomRange } from '../../utils.js';
 import { CONFIG } from '../../config.js';
+import { drawGlow } from '../../render.js';
 
 export class Hunter {
     constructor() {
@@ -24,21 +25,42 @@ export class Hunter {
     }
 
     draw(ctx) {
+        const color = CONFIG.colors.enemy;
+        const r = this.radius;
+
         ctx.save();
-        ctx.fillStyle = CONFIG.colors.enemy;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = CONFIG.colors.enemy;
+        drawGlow(ctx, this.position.x, this.position.y, r * 3, color, 0.4);
 
         ctx.translate(this.position.x, this.position.y);
         const angle = Math.atan2(this.velocity.y, this.velocity.x);
         ctx.rotate(angle);
 
+        // Exhaust flicker
+        ctx.fillStyle = 'rgba(255, 140, 60, 0.8)';
         ctx.beginPath();
-        ctx.moveTo(this.radius, 0);
-        ctx.lineTo(-this.radius, this.radius);
-        ctx.lineTo(-this.radius, -this.radius);
+        ctx.moveTo(-r * 0.6, -r * 0.35);
+        ctx.lineTo(-r * (1.3 + Math.random() * 0.6), 0);
+        ctx.lineTo(-r * 0.6, r * 0.35);
         ctx.closePath();
         ctx.fill();
+
+        // Arrowhead hull with a notched tail
+        ctx.beginPath();
+        ctx.moveTo(r * 1.2, 0);
+        ctx.lineTo(-r, r);
+        ctx.lineTo(-r * 0.45, 0);
+        ctx.lineTo(-r, -r);
+        ctx.closePath();
+        ctx.fillStyle = '#2a0610';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        // Eye slit
+        ctx.fillStyle = '#ffd0d0';
+        ctx.fillRect(r * 0.15, -1.5, r * 0.45, 3);
 
         ctx.restore();
     }

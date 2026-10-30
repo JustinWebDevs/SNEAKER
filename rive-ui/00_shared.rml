@@ -1,0 +1,29 @@
+<Rive version="1" kind="fragment">
+    <!-- Shared roots: font, converters and the HUD view model the game drives. -->
+    <FontAsset file="Montserrat.ttf" name="Montserrat" id="1:1"/>
+
+    <DataConverterToString decimals="0" round="true" name="Integer Text" id="1:10"/>
+    <DataConverterInterpolator interpolationType="cubic" duration="0.35" name="Roll" id="1:11">
+        <CubicEaseInterpolator x1="0.22" y1="1" x2="0.36" y2="1"/>
+    </DataConverterInterpolator>
+    <DataConverterGroup name="Rolling Counter" id="1:12">
+        <DataConverterGroupItem converterId="1:11"/>
+        <DataConverterGroupItem converterId="1:10"/>
+    </DataConverterGroup>
+    <DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="300"
+                              clampLower="true" clampUpper="true" name="Energy To Width" id="1:13"/>
+
+    <ViewModel defaultInstanceId="1:30" name="Hud" id="1:20">
+        <ViewModelPropertyNumber name="score" id="1:21"/>
+        <ViewModelPropertyNumber name="level" id="1:22"/>
+        <ViewModelPropertyNumber name="energy" id="1:23"/>
+        <ViewModelPropertyBoolean name="hardMode" id="1:24"/>
+
+        <ViewModelInstance exports="true" name="Default" id="1:30">
+            <ViewModelInstanceNumber propertyValue="1250" viewModelPropertyId="1:21"/>
+            <ViewModelInstanceNumber propertyValue="4" viewModelPropertyId="1:22"/>
+            <ViewModelInstanceNumber propertyValue="70" viewModelPropertyId="1:23"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="1:24"/>
+        </ViewModelInstance>
+    </ViewModel>
+</Rive>
