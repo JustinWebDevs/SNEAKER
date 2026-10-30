@@ -13,10 +13,15 @@ import { SkinSystem } from './systems/SkinSystem.js';
 import { ShopSystem } from './systems/ShopSystem.js';
 import { RiveUI } from './systems/RiveUI.js';
 import { SteeringInput, LEFT, RIGHT } from './systems/SteeringInput.js';
+import { TailTurret, drawTurretShot, drawHitFlash } from './systems/TailTurret.js';
 import { ICONS, iconSvg, hydrateIcons } from './icons.js';
 import { EXPIRY_WARNING_MS } from './render.js';
 
 const MAGNETO_RANGE = 150;  // px: food closer than this is pulled toward the head
+
+const HINTS_STORAGE_KEY = 'cyberSerpent_powerupHints';
+const HINT_TIMES = 3;           // pickups per power-up that still show its hint
+const HINT_DURATION_MS = 2600;
 
 export class Game {
     constructor() {
@@ -58,6 +63,7 @@ export class Game {
         this.enemies = [];
         this.pendingEnemySpawns = [];  // Visual warnings before enemy spawns
         this.gunProjectiles = [];  // Visual projectiles for gun powerup
+        this.tailTurret = new TailTurret();
 
         // Timers
         this.lastTime = 0;
@@ -223,6 +229,8 @@ export class Game {
         this.enemies = [];
         this.pendingEnemySpawns = [];  // Reset pending spawns
         this.gunProjectiles = [];  // Reset gun projectiles
+        this.tailTurret = new TailTurret();
+        this.powerupHint = null;
         this.particles = new ParticleSystem();
 
         this.lastTime = performance.now();
@@ -376,8 +384,9 @@ export class Game {
             }
         });
 
-        // Turret shooting
+        // Tail turret: track the nearest target every frame (drives the visuals), fire on cadence
         if (this.snake.powerups.turret.active) {
+            this.tailTurret.update(this.snake, this.enemies, frameMultiplier);
             const now = Date.now();
             // Reduced fire rate to 1 second (1000ms)
             if (now - this.snake.powerups.turret.lastShot > CONFIG.gun.fireRate) {
@@ -400,6 +409,7 @@ export class Game {
             if (proj.target && proj.position.distance(proj.target.position) < proj.radius + 10) {
                 if (proj.target.hp !== undefined) {
                     proj.target.hp -= CONFIG.gun.damage;
+                    proj.target.hitFlashAt = performance.now();
                     if (proj.target.hp <= 0) {
                         this.enemiesKilled++;
                     }
@@ -483,6 +493,7 @@ export class Game {
         this.powerups.forEach(p => p.draw(this.ctx));
         this.enemies.forEach(e => {
             e.draw(this.ctx);
+            drawHitFlash(this.ctx, e);
             // Draw HP bars for turrets
             if (e instanceof Turret && e.hp > 0) {
                 this.ctx.save();
@@ -513,23 +524,21 @@ export class Game {
             }
         });
 
-        // Draw gun projectiles
-        this.gunProjectiles.forEach(proj => {
-            this.ctx.save();
-            this.ctx.fillStyle = CONFIG.colors.gunProjectile;
-            this.ctx.shadowBlur = 15;
-            this.ctx.shadowColor = CONFIG.colors.gunProjectile;
-            this.ctx.beginPath();
-            this.ctx.arc(proj.position.x, proj.position.y, proj.radius, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.restore();
-        });
+        this.gunProjectiles.forEach(proj => drawTurretShot(this.ctx, proj));
+
+        const turretActive = this.snake.powerups.turret.active;
+        const turretVisibility = turretActive ? this.snake.effectVisibility('turret', 0.35) : 0;
+        if (turretActive) this.tailTurret.drawRange(this.ctx, this.snake, turretVisibility);
 
         this.drawMagnetoField();
         this.snake.draw(this.ctx);
+        if (turretActive) {
+            this.tailTurret.draw(this.ctx, this.snake, this.snake.powerups.turret.lastShot, turretVisibility);
+        }
         this.particles.draw(this.ctx);
         this.drawTimeWarpTint();
         this.drawGhostEndingWarning();
+        this.drawPowerupHint();
 
         // Blindness: darkness outside the vision radius
         if (this.snake && this.snake.blindness.active) {
@@ -698,8 +707,62 @@ export class Game {
         this.showToast('¡Nuevo nivel récord!', `+${CONFIG.game.newLevelBonus} monedas`, 'success', 2200);
     }
 
+    // The first few times a power-up is collected, a short label above the head says what it does
+    maybeShowPowerupHint(type) {
+        let seen = {};
+        try {
+            seen = JSON.parse(localStorage.getItem(HINTS_STORAGE_KEY) || '{}');
+        } catch { /* corrupted or blocked storage: show the hint */ }
+
+        if ((seen[type] || 0) >= HINT_TIMES) return;
+        seen[type] = (seen[type] || 0) + 1;
+        try {
+            localStorage.setItem(HINTS_STORAGE_KEY, JSON.stringify(seen));
+        } catch { /* storage unavailable */ }
+
+        this.powerupHint = { type, start: performance.now() };
+    }
+
+    drawPowerupHint() {
+        const hint = this.powerupHint;
+        if (!hint) return;
+        const age = performance.now() - hint.start;
+        if (age > HINT_DURATION_MS) {
+            this.powerupHint = null;
+            return;
+        }
+
+        const icon = ICONS[hint.type];
+        const fade = Math.min(1, age / 180, (HINT_DURATION_MS - age) / 300);
+        const rise = (1 - Math.min(1, age / 250)) * 8;
+        const x = this.snake.head.x;
+        const y = this.snake.head.y - 46 + rise;
+        const text = `${icon.label} · ${icon.hint}`;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = fade;
+        this.ctx.font = '700 13px Montserrat, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        const w = this.ctx.measureText(text).width + 22;
+        const left = Math.max(4, Math.min(CONFIG.canvas.width - w - 4, x - w / 2));
+
+        this.ctx.fillStyle = 'rgba(8, 8, 24, 0.85)';
+        this.ctx.strokeStyle = icon.color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        this.ctx.roundRect(left, y - 13, w, 26, 13);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillText(text, left + w / 2, y + 1);
+        this.ctx.restore();
+    }
+
     collectPowerup(powerup) {
         this.particles.emit(powerup.position.x, powerup.position.y, CONFIG.colors.powerup, 25);
+        this.maybeShowPowerupHint(powerup.type);
 
         const duration = this.shopSystem.getPowerupDuration(powerup.type);
 
@@ -862,35 +925,21 @@ export class Game {
     }
 
     shootFromTail() {
-        if (this.snake.segments.length < 2 || this.enemies.length === 0) return;
+        if (this.snake.segments.length < 2) return;
 
         const tail = this.snake.segments[this.snake.segments.length - 1];
+        const target = this.tailTurret.findTarget(tail, this.enemies);
+        if (!target) return;
 
-        let nearest = null;
-        let minDist = Infinity;
-
-        // Only target killable entities (exclude Virus and Blindness)
-        this.enemies.forEach(enemy => {
-            if (enemy instanceof Virus || enemy instanceof Blindness) return;  // Skip adverse powerups
-
-            const dist = tail.distance(enemy.position);
-            if (dist < minDist && dist < 300) {
-                minDist = dist;
-                nearest = enemy;
-            }
+        const direction = target.position.subtract(tail).normalize();
+        this.gunProjectiles.push({
+            position: new Vector2(tail.x, tail.y),
+            velocity: direction.multiply(CONFIG.gun.projectileSpeed),
+            target,
+            radius: CONFIG.gun.projectileRadius,
+            lifetime: 1000
         });
-
-        if (nearest) {
-            // Create visual projectile
-            const direction = nearest.position.subtract(tail).normalize();
-            this.gunProjectiles.push({
-                position: new Vector2(tail.x, tail.y),
-                velocity: direction.multiply(CONFIG.gun.projectileSpeed),
-                target: nearest,
-                radius: CONFIG.gun.projectileRadius,
-                lifetime: 1000
-            });
-        }
+        this.tailTurret.onFire();
     }
 
     gameOver() {
