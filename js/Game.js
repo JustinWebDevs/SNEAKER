@@ -14,6 +14,9 @@ import { ShopSystem } from './systems/ShopSystem.js';
 import { RiveUI } from './systems/RiveUI.js';
 import { SteeringInput, LEFT, RIGHT } from './systems/SteeringInput.js';
 import { ICONS, iconSvg, hydrateIcons } from './icons.js';
+import { EXPIRY_WARNING_MS } from './render.js';
+
+const MAGNETO_RANGE = 150;  // px: food closer than this is pulled toward the head
 
 export class Game {
     constructor() {
@@ -278,7 +281,7 @@ export class Game {
         // Magneto effect (normalized - uses player's normal time)
         if (this.snake.powerups.magneto.active) {
             const distance = this.food.position.distance(this.snake.head);
-            if (distance < 150) {
+            if (distance < MAGNETO_RANGE) {
                 const direction = this.snake.head.subtract(this.food.position).normalize();
                 this.food.position = this.food.position.add(direction.multiply(5 * frameMultiplier));
             }
@@ -522,13 +525,71 @@ export class Game {
             this.ctx.restore();
         });
 
+        this.drawMagnetoField();
         this.snake.draw(this.ctx);
         this.particles.draw(this.ctx);
+        this.drawTimeWarpTint();
+        this.drawGhostEndingWarning();
 
-        // Blindness vignette overlay (60% vision reduction)
+        // Blindness: darkness outside the vision radius
         if (this.snake && this.snake.blindness.active) {
             this.drawBlindness();
         }
+    }
+
+    // Magneto: animated dashed field line pulling the food toward the head while it is in range
+    drawMagnetoField() {
+        const magneto = this.snake.powerups.magneto;
+        if (!magneto.active) return;
+        const food = this.food.position;
+        const head = this.snake.head;
+        if (food.distance(head) >= MAGNETO_RANGE) return;
+
+        const color = ICONS.magneto.color;
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.7 * this.snake.effectVisibility('magneto', 0.25);
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.setLineDash([4, 8]);
+        this.ctx.lineDashOffset = Date.now() * 0.06;  // dashes flow from the food to the head
+        // Two slightly bowed lines read as a field rather than a rope
+        const mid = { x: (food.x + head.x) / 2, y: (food.y + head.y) / 2 };
+        const nx = -(head.y - food.y) * 0.18;
+        const ny = (head.x - food.x) * 0.18;
+        [1, -1].forEach(side => {
+            this.ctx.beginPath();
+            this.ctx.moveTo(food.x, food.y);
+            this.ctx.quadraticCurveTo(mid.x + nx * side, mid.y + ny * side, head.x, head.y);
+            this.ctx.stroke();
+        });
+        this.ctx.restore();
+    }
+
+    // Time Warp: a cool tint over the arena while the world is slowed; it flickers before ending
+    drawTimeWarpTint() {
+        if (!this.snake.powerups.timeWarp.active) return;
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.07 * this.snake.effectVisibility('timeWarp', 0.15);
+        this.ctx.fillStyle = ICONS.timeWarp.color;
+        this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        this.ctx.restore();
+    }
+
+    // Ghost is the one effect whose end can kill you (inside a turret or your own body),
+    // so its last second also pulses the arena edges red.
+    drawGhostEndingWarning() {
+        const ghost = this.snake.powerups.ghost;
+        if (!ghost.active || ghost.duration > 1000) return;
+        const { width, height } = CONFIG.canvas;
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.025);
+        const edge = this.ctx.createRadialGradient(width / 2, height / 2, height * 0.45, width / 2, height / 2, width * 0.65);
+        edge.addColorStop(0, 'rgba(255, 77, 109, 0)');
+        edge.addColorStop(1, `rgba(255, 77, 109, ${0.12 + pulse * 0.13})`);
+        this.ctx.save();
+        this.ctx.fillStyle = edge;
+        this.ctx.fillRect(0, 0, width, height);
+        this.ctx.restore();
     }
 
     // Blindness: everything outside a small circle around the head is fully dark,
@@ -916,7 +977,7 @@ export class Game {
             Object.keys(this.snake.powerups).forEach(key => {
                 const powerup = this.snake.powerups[key];
                 if (powerup.active) {
-                    chips.push({ key, time: Math.ceil(powerup.duration / 1000) });
+                    chips.push({ key, time: Math.ceil(powerup.duration / 1000), expiring: powerup.duration < EXPIRY_WARNING_MS });
                 }
             });
             if (this.controlsInverted) {
@@ -927,14 +988,14 @@ export class Game {
             }
 
             // Rebuild only when the visible text changes, not every frame
-            const signature = chips.map(c => `${c.key}:${c.time}`).join('|');
+            const signature = chips.map(c => `${c.key}:${c.time}:${c.expiring ? 1 : 0}`).join('|');
             if (signature !== this.powerupSignature) {
                 this.powerupSignature = signature;
                 powerupsDiv.innerHTML = chips.map(c => {
                     const icon = ICONS[c.key];
                     const label = icon ? icon.label : c.key.toUpperCase();
                     const color = icon ? icon.color : CONFIG.colors.powerup;
-                    return `<div class="powerup-indicator${c.adverse ? ' adverse' : ''}" style="--icon-color: ${color}">` +
+                    return `<div class="powerup-indicator${c.adverse ? ' adverse' : ''}${c.expiring ? ' expiring' : ''}" style="--icon-color: ${color}">` +
                         `${iconSvg(c.key)}${label}<span>${c.time}s</span></div>`;
                 }).join('');
             }

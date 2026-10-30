@@ -924,6 +924,17 @@ kbd {
     animation: chipIn 0.3s var(--ease-out) both;
 }
 
+/* Last seconds of a power-up: the chip blinks, matching the ring around the head */
+.powerup-indicator.expiring {
+    animation: chipExpiring 0.32s steps(1, end) infinite;
+}
+
+@keyframes chipExpiring {
+    50% {
+        opacity: 0.35;
+    }
+}
+
 .powerup-indicator .icon {
     color: var(--icon-color, var(--magenta));
 }

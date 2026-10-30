@@ -3,6 +3,17 @@
 import { CONFIG } from './config.js';
 import { drawIcon } from './icons.js';
 
+// Power-up expiry warning: during the last EXPIRY_WARNING_MS, blink between 1 and `dim`,
+// starting slow and speeding up as the effect runs out.
+export const EXPIRY_WARNING_MS = 2000;
+
+export function expiryBlink(remaining, dim = 0.2) {
+    if (remaining >= EXPIRY_WARNING_MS) return 1;
+    const urgency = 1 - Math.max(0, remaining) / EXPIRY_WARNING_MS;  // 0 -> 1
+    const period = 280 - urgency * 190;                               // ms per on/off half-cycle
+    return Math.floor(Date.now() / period) % 2 === 0 ? 1 : dim;
+}
+
 export function hexToRgba(hex, alpha) {
     const h = hex.replace('#', '');
     const r = parseInt(h.substring(0, 2), 16);
