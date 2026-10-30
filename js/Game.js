@@ -12,6 +12,7 @@ import { ProgressionSystem } from './systems/ProgressionSystem.js';
 import { SkinSystem } from './systems/SkinSystem.js';
 import { ShopSystem } from './systems/ShopSystem.js';
 import { RiveUI } from './systems/RiveUI.js';
+import { SteeringInput, LEFT, RIGHT } from './systems/SteeringInput.js';
 import { ICONS, iconSvg, hydrateIcons } from './icons.js';
 
 export class Game {
@@ -21,11 +22,13 @@ export class Game {
         this.canvas.width = CONFIG.canvas.width;
         this.canvas.height = CONFIG.canvas.height;
 
+        // Snake reads left/right from here; they are derived from this.steering every frame
         this.input = {
             left: false,
             right: false,
             dash: false
         };
+        this.steering = new SteeringInput();
 
         this.state = 'menu';
         this.score = 0;
@@ -74,51 +77,56 @@ export class Game {
     }
 
     setupEventListeners() {
+        // Physical key codes, so it works with any keyboard layout and with Caps Lock on
+        const steerKeys = {
+            KeyA: LEFT,
+            ArrowLeft: LEFT,
+            KeyD: RIGHT,
+            ArrowRight: RIGHT
+        };
+
         window.addEventListener('keydown', (e) => {
-            if (this.state !== 'playing') return;
-
-            const left = this.controlsInverted;
-
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                this.input[left ? 'right' : 'left'] = true;
+            if (steerKeys[e.code] !== undefined) {
+                // Held keys are tracked in every state, so a key held through a pause or restart keeps working
+                if (this.state === 'playing') e.preventDefault();
+                if (!e.repeat) this.steering.press(e.code, steerKeys[e.code]);
+                return;
             }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                this.input[left ? 'left' : 'right'] = true;
-            }
-            if (e.key === ' ') {
+
+            if (e.code === 'Space' && (this.state === 'playing' || this.state === 'gameover')) {
                 e.preventDefault();
-                // Only allow dash during gameplay, not in game over
+                if (e.repeat) return;
                 if (this.state === 'playing') {
                     this.input.dash = true;
+                } else if (this.state === 'gameover') {
+                    // Quick restart
+                    this.startGame();
                 }
+                return;
             }
-            if (e.key === 'Escape') {
-                if (this.state === 'playing') {
-                    this.togglePause();
-                }
+
+            if (e.code === 'Escape' && this.state === 'playing') {
+                this.togglePause();
             }
         });
 
         window.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                this.input.left = false;
-                this.input.right = false;
+            if (steerKeys[e.code] !== undefined) {
+                this.steering.release(e.code);
             }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                this.input.left = false;
-                this.input.right = false;
-            }
-            if (e.key === ' ') {
+            if (e.code === 'Space') {
                 this.input.dash = false;
             }
         });
 
-        // Quick reset on spacebar during game over
-        window.addEventListener('keydown', (e) => {
-            if (this.state === 'gameover' && e.key === ' ') {
-                e.preventDefault();
-                this.startGame();
-            }
+        // Keyups are never delivered while the window is unfocused; forget held keys so none get stuck
+        const releaseAll = () => {
+            this.steering.clear();
+            this.input.dash = false;
+        };
+        window.addEventListener('blur', releaseAll);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) releaseAll();
         });
     }
 
@@ -128,72 +136,48 @@ export class Game {
     }
 
     setupMobileControls() {
+        const mobileControls = document.getElementById('mobile-controls');
         if (!this.isMobile) {
             // Hide mobile controls on desktop
-            const mobileControls = document.getElementById('mobile-controls');
-            if (mobileControls) {
-                mobileControls.style.display = 'none';
-            }
+            if (mobileControls) mobileControls.style.display = 'none';
             return;
         }
+        if (mobileControls) mobileControls.style.display = 'block';
 
-        // Show mobile controls
-        const mobileControls = document.getElementById('mobile-controls');
-        if (mobileControls) {
-            mobileControls.style.display = 'block';
-        }
+        // Pointer events give every finger its own id, so each thumb is tracked separately
+        // and the steering buttons follow the same "last pressed wins" rule as the keyboard.
+        // Keep receiving this finger's events even if it slides off the button.
+        // Capture can fail on some browsers; the press must still count.
+        const capturePointer = (el, e) => {
+            try { el.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+        };
+        const bindSteerButton = (id, dir) => {
+            const button = document.getElementById(id);
+            if (!button) return;
+            button.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                capturePointer(button, e);
+                this.steering.press(`pointer-${e.pointerId}`, dir);
+            });
+            const release = (e) => this.steering.release(`pointer-${e.pointerId}`);
+            button.addEventListener('pointerup', release);
+            button.addEventListener('pointercancel', release);
+            button.addEventListener('lostpointercapture', release);
+        };
+        bindSteerButton('left-arrow', LEFT);
+        bindSteerButton('right-arrow', RIGHT);
 
-        const leftArrow = document.getElementById('left-arrow');
-        const rightArrow = document.getElementById('right-arrow');
         const dashButton = document.getElementById('dash-button');
-
-        // Left arrow button
-        if (leftArrow) {
-            leftArrow.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                const left = this.controlsInverted;
-                this.input[left ? 'right' : 'left'] = true;
-            });
-
-            leftArrow.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.left = false;
-                this.input.right = false;
-            });
-        }
-
-        // Right arrow button
-        if (rightArrow) {
-            rightArrow.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                const left = this.controlsInverted;
-                this.input[left ? 'left' : 'right'] = true;
-            });
-
-            rightArrow.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.left = false;
-                this.input.right = false;
-            });
-        }
-
-        // Dash button
         if (dashButton) {
-            dashButton.addEventListener('touchstart', (e) => {
-                if (this.state !== 'playing') return;
+            dashButton.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                this.input.dash = true;
+                capturePointer(dashButton, e);
+                if (this.state === 'playing') this.input.dash = true;
             });
-
-            dashButton.addEventListener('touchend', (e) => {
-                if (this.state !== 'playing') return;
-                e.preventDefault();
-                this.input.dash = false;
-            });
+            const endDash = () => { this.input.dash = false; };
+            dashButton.addEventListener('pointerup', endDash);
+            dashButton.addEventListener('pointercancel', endDash);
+            dashButton.addEventListener('lostpointercapture', endDash);
         }
     }
 
@@ -268,6 +252,11 @@ export class Game {
         const effectiveDelta = timeWarp ? deltaTime * 0.3 : deltaTime;
 
         // Update snake (uses normal deltaTime - timeWarp should NOT affect player)
+        // Resolve steering now, so the Virus inversion applies even to keys already held
+        const steer = this.steering.getDirection() * (this.controlsInverted ? -1 : 1);
+        this.input.left = steer < 0;
+        this.input.right = steer > 0;
+
         const levelMultiplier = (this.level - 1) * CONFIG.game.speedIncreasePerLevel;
         this.snake.update(deltaTime, this.input, levelMultiplier);
 
@@ -343,6 +332,7 @@ export class Game {
             if (enemy instanceof Blindness && enemy.checkCollision(this.snake)) {
                 this.snake.blindness.active = true;
                 this.snake.blindness.duration = enemy.duration;
+                this.snake.blindness.total = enemy.duration;
                 enemy.lifetime = 0;
                 this.particles.emit(enemy.position.x, enemy.position.y, CONFIG.colors.adversePowerup, 20);
             }
@@ -537,17 +527,44 @@ export class Game {
 
         // Blindness vignette overlay (60% vision reduction)
         if (this.snake && this.snake.blindness.active) {
-            const gradient = this.ctx.createRadialGradient(
-                this.snake.head.x, this.snake.head.y, 100,
-                this.snake.head.x, this.snake.head.y, CONFIG.canvas.width / 2
-            );
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.2)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');  // 60% darkness
-
-            this.ctx.fillStyle = gradient;
-            this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+            this.drawBlindness();
         }
+    }
+
+    // Blindness: everything outside a small circle around the head is fully dark,
+    // so food, power-ups, enemies and spawn warnings out there cannot be seen.
+    drawBlindness() {
+        const { blindness, head } = this.snake;
+        const visionR = CONFIG.game.blindnessVisionRadius;
+        const fade = 400;  // ms to fade the darkness in and out
+        const elapsed = (blindness.total || blindness.duration) - blindness.duration;
+        const strength = Math.max(0, Math.min(1, elapsed / fade, blindness.duration / fade));
+        const darkness = strength;
+
+        const gradient = this.ctx.createRadialGradient(head.x, head.y, visionR * 0.55, head.x, head.y, visionR);
+        gradient.addColorStop(0, 'rgba(2, 2, 8, 0)');
+        gradient.addColorStop(1, `rgba(2, 2, 8, ${darkness})`);
+
+        this.ctx.save();
+        // Clear vision inside the circle, soft edge, then solid darkness to the borders
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = `rgba(2, 2, 8, ${darkness})`;
+        this.ctx.beginPath();
+        this.ctx.rect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2, true);
+        this.ctx.fill('evenodd');
+
+        // Faint red rim marks the edge of vision
+        this.ctx.strokeStyle = `rgba(255, 77, 109, ${0.35 * strength})`;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(head.x, head.y, visionR, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
     eatFood() {

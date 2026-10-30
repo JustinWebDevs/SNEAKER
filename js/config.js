@@ -26,7 +26,8 @@ export const CONFIG = {
         hardModeScoreMultiplier: 1.5,  // 1.5x points in HARD MODE
         hardModeCoinMultiplier: 2,  // 2x coins in HARD MODE
         hardModeBonus: 100,  // 100 coins for reaching HARD MODE
-        newLevelBonus: 50  // 50 coins for reaching a new personal best level
+        newLevelBonus: 50,  // 50 coins for reaching a new personal best level
+        blindnessVisionRadius: 170  // px of clear vision around the head while blinded
     },
     powerups: {
         spawnInterval: 15000,
