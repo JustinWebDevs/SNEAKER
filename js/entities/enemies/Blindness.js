@@ -1,5 +1,6 @@
 import { Vector2, randomRange } from '../../utils.js';
 import { CONFIG } from '../../config.js';
+import { drawHazard } from '../../render.js';
 
 export class Blindness {
     constructor() {
@@ -17,24 +18,7 @@ export class Blindness {
     }
 
     draw(ctx) {
-        ctx.save();
-        // Red-orange warning color for adverse powerups
-        ctx.fillStyle = CONFIG.colors.adversePowerup;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = CONFIG.colors.adversePowerup;
-
-        const pulse = Math.sin(Date.now() * 0.01) * 2;
-        ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.radius + pulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye icon
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('👁️', this.position.x, this.position.y);
-
-        ctx.restore();
+        drawHazard(ctx, this.position, this.radius, 'blindness');
     }
 
     checkCollision(snake) {

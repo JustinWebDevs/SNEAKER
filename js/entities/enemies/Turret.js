@@ -1,5 +1,6 @@
 import { Vector2, randomRange } from '../../utils.js';
 import { CONFIG } from '../../config.js';
+import { drawGlow, polygonPath } from '../../render.js';
 
 export class Turret {
     constructor() {
@@ -12,6 +13,7 @@ export class Turret {
         this.lastShot = 0;
         this.projectiles = [];
         this.hp = 3;  // Turrets have 3 HP
+        this.aimAngle = -Math.PI / 2;  // Visual only: barrel direction of the last shot
     }
 
     update(deltaTime, snake, timeWarpActive) {
@@ -41,6 +43,7 @@ export class Turret {
     shoot(snake) {
         const direction = snake.head.subtract(this.position);
         const angle = Math.atan2(direction.y, direction.x);
+        this.aimAngle = angle;
 
         this.projectiles.push({
             position: new Vector2(this.position.x, this.position.y),
@@ -50,27 +53,55 @@ export class Turret {
     }
 
     draw(ctx) {
-        ctx.save();
-        ctx.fillStyle = CONFIG.colors.turret;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = CONFIG.colors.turret;
+        const color = CONFIG.colors.turret;
+        const { x, y } = this.position;
+        const r = this.radius;
+        const t = Date.now();
+        // Charge-up: the core brightens as the next shot approaches
+        const charge = Math.min(this.lastShot / this.shootInterval, 1);
 
+        ctx.save();
+        drawGlow(ctx, x, y, r * 2.8, color, 0.3 + charge * 0.3);
+
+        // Rotating dashed outer ring
+        ctx.setLineDash([6, 5]);
+        ctx.lineDashOffset = t * 0.02;
+        ctx.strokeStyle = 'rgba(255, 170, 80, 0.6)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.rect(
-            this.position.x - this.radius,
-            this.position.y - this.radius,
-            this.radius * 2,
-            this.radius * 2
-        );
+        ctx.arc(x, y, r + 7, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Octagonal armored body
+        polygonPath(ctx, x, y, r, 8, Math.PI / 8);
+        ctx.fillStyle = '#2b1404';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        // Barrel aimed where it last fired
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(this.aimAngle);
+        ctx.fillStyle = color;
+        ctx.fillRect(0, -3, r + 6, 6);
+        ctx.restore();
+
+        // Core
+        ctx.fillStyle = `rgba(255, ${Math.round(200 + charge * 55)}, ${Math.round(120 + charge * 120)}, 1)`;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.35 + charge * 2, 0, Math.PI * 2);
         ctx.fill();
 
         this.projectiles.forEach(proj => {
-            // Orange projectiles to match turret color
-            ctx.fillStyle = CONFIG.colors.turret;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = CONFIG.colors.turret;
+            const px = proj.position.x;
+            const py = proj.position.y;
+            drawGlow(ctx, px, py, proj.radius * 3.5, color, 0.6);
+            ctx.fillStyle = '#ffe2c0';
             ctx.beginPath();
-            ctx.arc(proj.position.x, proj.position.y, proj.radius, 0, Math.PI * 2);
+            ctx.arc(px, py, proj.radius * 0.8, 0, Math.PI * 2);
             ctx.fill();
         });
 

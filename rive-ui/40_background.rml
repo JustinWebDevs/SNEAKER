@@ -1,0 +1,260 @@
+<Rive version="1" kind="fragment">
+    <!-- Menu backdrop: drifting neon orbs, twinkling stars, a slithering sky snake and a scrolling floor grid. -->
+    <Artboard defaultStateMachineId="5:90" styleId="5:2" width="1600" height="900" x="900" y="0" name="Background" id="5:1">
+        <LayoutComponentStyle name="Background Style" id="5:2"/>
+        <Shape x="800.0" y="610" name="Horizon">
+            <Rectangle width="1600" height="2" originX="0.5" originY="0.5" name="Path"/>
+            <Stroke thickness="6" name="Glow"><SolidColor colorValue="CCFF2BD6" name="C"/><Feather strength="18" name="F"/></Stroke>
+            <Fill name="Fill"><SolidColor colorValue="FFFF7AE6" name="C"/></Fill>
+        </Shape>
+        <Shape x="800.0" y="610" name="Floor Fade">
+            <Rectangle width="1600" height="170" originX="0.5" originY="0" name="Path"/>
+            <Fill name="Fill"><LinearGradient startX="0" startY="0" endX="0" endY="170" name="G">
+                <GradientStop colorValue="FF0B0820" position="0"/>
+                <GradientStop colorValue="000B0820" position="1"/>
+            </LinearGradient></Fill>
+        </Shape>
+        <Node x="800.0" y="610" name="Floor Scroll" id="5:30">
+            <Shape name="Floor Rows">
+                <PointsPath name="Row 0"><StraightVertex x="-800.0" y="0"/><StraightVertex x="800.0" y="0"/></PointsPath>
+                <PointsPath name="Row 1"><StraightVertex x="-800.0" y="36"/><StraightVertex x="800.0" y="36"/></PointsPath>
+                <PointsPath name="Row 2"><StraightVertex x="-800.0" y="72"/><StraightVertex x="800.0" y="72"/></PointsPath>
+                <PointsPath name="Row 3"><StraightVertex x="-800.0" y="108"/><StraightVertex x="800.0" y="108"/></PointsPath>
+                <PointsPath name="Row 4"><StraightVertex x="-800.0" y="144"/><StraightVertex x="800.0" y="144"/></PointsPath>
+                <PointsPath name="Row 5"><StraightVertex x="-800.0" y="180"/><StraightVertex x="800.0" y="180"/></PointsPath>
+                <PointsPath name="Row 6"><StraightVertex x="-800.0" y="216"/><StraightVertex x="800.0" y="216"/></PointsPath>
+                <PointsPath name="Row 7"><StraightVertex x="-800.0" y="252"/><StraightVertex x="800.0" y="252"/></PointsPath>
+                <PointsPath name="Row 8"><StraightVertex x="-800.0" y="288"/><StraightVertex x="800.0" y="288"/></PointsPath>
+                <PointsPath name="Row 9"><StraightVertex x="-800.0" y="324"/><StraightVertex x="800.0" y="324"/></PointsPath>
+                <Stroke thickness="1.5" name="S"><SolidColor colorValue="5500E5FF" name="C"/></Stroke>
+                <ClippingShape sourceId="5:31" name="Clip"/>
+            </Shape>
+        </Node>
+        <Shape x="800.0" y="610" name="Floor Mask" id="5:31">
+            <Rectangle width="1600" height="290" originX="0.5" originY="0" name="Path"/>
+        </Shape>
+        <Shape x="800.0" y="610" name="Floor Rays">
+            <PointsPath name="Ray -12"><StraightVertex x="-144" y="0"/><StraightVertex x="-3120" y="290"/></PointsPath>
+            <PointsPath name="Ray -11"><StraightVertex x="-132" y="0"/><StraightVertex x="-2860" y="290"/></PointsPath>
+            <PointsPath name="Ray -10"><StraightVertex x="-120" y="0"/><StraightVertex x="-2600" y="290"/></PointsPath>
+            <PointsPath name="Ray -9"><StraightVertex x="-108" y="0"/><StraightVertex x="-2340" y="290"/></PointsPath>
+            <PointsPath name="Ray -8"><StraightVertex x="-96" y="0"/><StraightVertex x="-2080" y="290"/></PointsPath>
+            <PointsPath name="Ray -7"><StraightVertex x="-84" y="0"/><StraightVertex x="-1820" y="290"/></PointsPath>
+            <PointsPath name="Ray -6"><StraightVertex x="-72" y="0"/><StraightVertex x="-1560" y="290"/></PointsPath>
+            <PointsPath name="Ray -5"><StraightVertex x="-60" y="0"/><StraightVertex x="-1300" y="290"/></PointsPath>
+            <PointsPath name="Ray -4"><StraightVertex x="-48" y="0"/><StraightVertex x="-1040" y="290"/></PointsPath>
+            <PointsPath name="Ray -3"><StraightVertex x="-36" y="0"/><StraightVertex x="-780" y="290"/></PointsPath>
+            <PointsPath name="Ray -2"><StraightVertex x="-24" y="0"/><StraightVertex x="-520" y="290"/></PointsPath>
+            <PointsPath name="Ray -1"><StraightVertex x="-12" y="0"/><StraightVertex x="-260" y="290"/></PointsPath>
+            <PointsPath name="Ray 0"><StraightVertex x="0" y="0"/><StraightVertex x="0" y="290"/></PointsPath>
+            <PointsPath name="Ray 1"><StraightVertex x="12" y="0"/><StraightVertex x="260" y="290"/></PointsPath>
+            <PointsPath name="Ray 2"><StraightVertex x="24" y="0"/><StraightVertex x="520" y="290"/></PointsPath>
+            <PointsPath name="Ray 3"><StraightVertex x="36" y="0"/><StraightVertex x="780" y="290"/></PointsPath>
+            <PointsPath name="Ray 4"><StraightVertex x="48" y="0"/><StraightVertex x="1040" y="290"/></PointsPath>
+            <PointsPath name="Ray 5"><StraightVertex x="60" y="0"/><StraightVertex x="1300" y="290"/></PointsPath>
+            <PointsPath name="Ray 6"><StraightVertex x="72" y="0"/><StraightVertex x="1560" y="290"/></PointsPath>
+            <PointsPath name="Ray 7"><StraightVertex x="84" y="0"/><StraightVertex x="1820" y="290"/></PointsPath>
+            <PointsPath name="Ray 8"><StraightVertex x="96" y="0"/><StraightVertex x="2080" y="290"/></PointsPath>
+            <PointsPath name="Ray 9"><StraightVertex x="108" y="0"/><StraightVertex x="2340" y="290"/></PointsPath>
+            <PointsPath name="Ray 10"><StraightVertex x="120" y="0"/><StraightVertex x="2600" y="290"/></PointsPath>
+            <PointsPath name="Ray 11"><StraightVertex x="132" y="0"/><StraightVertex x="2860" y="290"/></PointsPath>
+            <PointsPath name="Ray 12"><StraightVertex x="144" y="0"/><StraightVertex x="3120" y="290"/></PointsPath>
+            <Stroke thickness="1.5" name="S"><SolidColor colorValue="55FF2BD6" name="C"/></Stroke>
+        </Shape>
+        <Shape x="800.0" y="300" name="Sky Snake">
+            <PointsPath name="Path">
+                <CubicMirroredVertex x="-900.0" y="0" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="-750.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="-600.0" y="40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="-450.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="-300.0" y="40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="-150.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="0.0" y="40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="150.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="300.0" y="40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="450.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="600.0" y="40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="750.0" y="-40" rotation="0" distance="50"/>
+                <CubicMirroredVertex x="900.0" y="0" rotation="0" distance="50"/>
+            </PointsPath>
+            <Stroke thickness="14" cap="round" name="Glow"><SolidColor colorValue="8800E5FF" name="C"/><Feather strength="16" name="F"/><TargetEffect targetId="5:40" name="T"/></Stroke>
+            <Stroke thickness="5" cap="round" name="Body"><SolidColor colorValue="CC7DF9FF" name="C"/><TargetEffect targetId="5:40" name="T"/></Stroke>
+        </Shape>
+        <GroupEffect name="Sky Slither" id="5:40">
+            <TrimPath start="0" end="0.12" offset="0" modeValue="sequential" name="Trim" id="5:41"/>
+        </GroupEffect>
+        <Shape name="Stars" id="5:50">
+            <Ellipse x="529" y="108" width="2" height="2" name="Star 0"/>
+            <Ellipse x="142" y="309" width="3" height="3" name="Star 1"/>
+            <Ellipse x="927" y="503" width="2" height="2" name="Star 2"/>
+            <Ellipse x="88" y="255" width="2" height="2" name="Star 3"/>
+            <Ellipse x="401" y="317" width="2" height="2" name="Star 4"/>
+            <Ellipse x="1303" y="94" width="2" height="2" name="Star 5"/>
+            <Ellipse x="1001" y="333" width="2" height="2" name="Star 6"/>
+            <Ellipse x="919" y="236" width="2" height="2" name="Star 7"/>
+            <Ellipse x="102" y="476" width="3" height="3" name="Star 8"/>
+            <Ellipse x="675" y="311" width="3" height="3" name="Star 9"/>
+            <Ellipse x="893" y="385" width="2" height="2" name="Star 10"/>
+            <Ellipse x="926" y="362" width="3" height="3" name="Star 11"/>
+            <Ellipse x="180" y="400" width="2" height="2" name="Star 12"/>
+            <Ellipse x="983" y="288" width="4" height="4" name="Star 13"/>
+            <Ellipse x="1227" y="272" width="4" height="4" name="Star 14"/>
+            <Ellipse x="587" y="159" width="2" height="2" name="Star 15"/>
+            <Ellipse x="1106" y="157" width="3" height="3" name="Star 16"/>
+            <Ellipse x="839" y="485" width="4" height="4" name="Star 17"/>
+            <Ellipse x="473" y="540" width="2" height="2" name="Star 18"/>
+            <Ellipse x="818" y="116" width="3" height="3" name="Star 19"/>
+            <Ellipse x="264" y="284" width="2" height="2" name="Star 20"/>
+            <Ellipse x="1512" y="70" width="3" height="3" name="Star 21"/>
+            <Ellipse x="554" y="212" width="4" height="4" name="Star 22"/>
+            <Ellipse x="923" y="267" width="2" height="2" name="Star 23"/>
+            <Ellipse x="1485" y="277" width="2" height="2" name="Star 24"/>
+            <Ellipse x="123" y="395" width="4" height="4" name="Star 25"/>
+            <Fill name="Fill"><SolidColor colorValue="CCFFFFFF" name="C"/></Fill>
+        </Shape>
+        <Shape name="Stars Dim" id="5:51">
+            <Ellipse x="468" y="238" width="2" height="2" name="Star 0"/>
+            <Ellipse x="1060" y="42" width="2" height="2" name="Star 1"/>
+            <Ellipse x="741" y="121" width="2" height="2" name="Star 2"/>
+            <Ellipse x="210" y="62" width="2" height="2" name="Star 3"/>
+            <Ellipse x="1213" y="100" width="2" height="2" name="Star 4"/>
+            <Ellipse x="411" y="241" width="2" height="2" name="Star 5"/>
+            <Ellipse x="1372" y="74" width="2" height="2" name="Star 6"/>
+            <Ellipse x="722" y="327" width="2" height="2" name="Star 7"/>
+            <Ellipse x="1390" y="472" width="2" height="2" name="Star 8"/>
+            <Ellipse x="1361" y="180" width="2" height="2" name="Star 9"/>
+            <Ellipse x="670" y="224" width="2" height="2" name="Star 10"/>
+            <Ellipse x="1392" y="547" width="2" height="2" name="Star 11"/>
+            <Ellipse x="262" y="125" width="2" height="2" name="Star 12"/>
+            <Ellipse x="387" y="156" width="2" height="2" name="Star 13"/>
+            <Ellipse x="777" y="348" width="2" height="2" name="Star 14"/>
+            <Ellipse x="435" y="32" width="2" height="2" name="Star 15"/>
+            <Ellipse x="675" y="229" width="2" height="2" name="Star 16"/>
+            <Ellipse x="902" y="545" width="2" height="2" name="Star 17"/>
+            <Ellipse x="1093" y="308" width="2" height="2" name="Star 18"/>
+            <Ellipse x="981" y="395" width="2" height="2" name="Star 19"/>
+            <Ellipse x="113" y="516" width="2" height="2" name="Star 20"/>
+            <Ellipse x="1231" y="502" width="2" height="2" name="Star 21"/>
+            <Ellipse x="1259" y="242" width="2" height="2" name="Star 22"/>
+            <Ellipse x="644" y="86" width="2" height="2" name="Star 23"/>
+            <Ellipse x="1007" y="64" width="2" height="2" name="Star 24"/>
+            <Ellipse x="134" y="143" width="2" height="2" name="Star 25"/>
+            <Ellipse x="280" y="214" width="2" height="2" name="Star 26"/>
+            <Ellipse x="111" y="30" width="2" height="2" name="Star 27"/>
+            <Ellipse x="263" y="85" width="2" height="2" name="Star 28"/>
+            <Ellipse x="590" y="44" width="2" height="2" name="Star 29"/>
+            <Fill name="Fill"><SolidColor colorValue="6699DDFF" name="C"/></Fill>
+        </Shape>
+        <Shape x="360" y="260" name="Orb Cyan" id="5:60">
+            <Ellipse width="900" height="900" name="Path"/>
+            <Fill name="Fill"><RadialGradient startX="0" startY="0" endX="450.0" endY="0" name="G">
+                <GradientStop colorValue="3700E5FF" position="0"/>
+                <GradientStop colorValue="0000E5FF" position="1"/>
+            </RadialGradient></Fill>
+        </Shape>
+        <Shape x="1250" y="330" name="Orb Magenta" id="5:61">
+            <Ellipse width="1000" height="1000" name="Path"/>
+            <Fill name="Fill"><RadialGradient startX="0" startY="0" endX="500.0" endY="0" name="G">
+                <GradientStop colorValue="32FF2BD6" position="0"/>
+                <GradientStop colorValue="00FF2BD6" position="1"/>
+            </RadialGradient></Fill>
+        </Shape>
+        <Shape x="820" y="120" name="Orb Blue" id="5:62">
+            <Ellipse width="800" height="800" name="Path"/>
+            <Fill name="Fill"><RadialGradient startX="0" startY="0" endX="400.0" endY="0" name="G">
+                <GradientStop colorValue="282B7BFF" position="0"/>
+                <GradientStop colorValue="002B7BFF" position="1"/>
+            </RadialGradient></Fill>
+        </Shape>
+        <Fill name="Sky"><LinearGradient startX="0" startY="0" endX="0" endY="900" name="G">
+            <GradientStop colorValue="FF05050C" position="0"/>
+            <GradientStop colorValue="FF160A2E" position="0.678"/>
+            <GradientStop colorValue="FF0B0820" position="1"/>
+        </LinearGradient></Fill>
+        <LinearAnimation loopValue="loop" duration="720" name="Ambient" id="5:70">
+            <KeyedObject objectId="5:60">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="360" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="231" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="360" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="260" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="188" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="260" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="5:61">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="1250" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1378" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1250" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="330" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="376" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="330" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="5:62">
+                <KeyedProperty property="x">
+                    <KeyFrameDouble value="820" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="979" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="820" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="120" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="184" frame="360" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="120" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="5:50">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.35" frame="90" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="180" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.5" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="420" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.4" frame="560" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="5:51">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0.3" frame="0" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="120" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.4" frame="260" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="400" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.3" frame="560" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.3" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="5:41">
+                <KeyedProperty property="offset">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="720" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" duration="45" name="Floor" id="5:71">
+            <KeyedObject objectId="5:30">
+                <KeyedProperty property="y">
+                    <KeyFrameDouble value="610" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="646" frame="45" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <StateMachine name="Background SM" id="5:90">
+            <StateMachineLayer name="Layer 5:70" id="5:91">
+                <AnyState x="0" y="-120"/><ExitState x="400" y="-120"/>
+                <EntryState x="0" y="0"><StateTransition stateToId="5:92"/></EntryState>
+                <AnimationState animationId="5:70" x="200" y="0" id="5:92"/>
+            </StateMachineLayer>
+            <StateMachineLayer name="Layer 5:71" id="5:93">
+                <AnyState x="0" y="80"/><ExitState x="400" y="80"/>
+                <EntryState x="0" y="200"><StateTransition stateToId="5:94"/></EntryState>
+                <AnimationState animationId="5:71" x="200" y="200" id="5:94"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+</Rive>

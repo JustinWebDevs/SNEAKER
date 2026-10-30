@@ -23,17 +23,22 @@ export class Particle {
         this.velocity = this.velocity.multiply(friction);
     }
 
+    // Called inside ParticleSystem.draw, which sets additive blending once for all particles
     draw(ctx) {
-        const alpha = this.lifetime / this.maxLifetime;
-        ctx.save();
-        ctx.globalAlpha = alpha;
+        const life = this.lifetime / this.maxLifetime;
+        const size = this.size * (0.4 + life * 0.6);
         ctx.fillStyle = this.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
+
+        // Soft halo, then a bright core
+        ctx.globalAlpha = life * 0.25;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, size * 2.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
+
+        ctx.globalAlpha = life;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     isDead() {
@@ -62,6 +67,10 @@ export class ParticleSystem {
     }
 
     draw(ctx) {
+        if (this.particles.length === 0) return;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
         this.particles.forEach(p => p.draw(ctx));
+        ctx.restore();
     }
 }

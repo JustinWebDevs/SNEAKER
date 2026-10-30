@@ -1,4 +1,5 @@
 import { CONFIG, SECRET_CODES } from '../config.js';
+import { ICONS, iconSvg } from '../icons.js';
 
 export class ShopSystem {
     constructor(progressionSystem, skinSystem) {
@@ -142,13 +143,6 @@ export class ShopSystem {
         container.innerHTML = '';
 
         const powerups = ['ghost', 'timeWarp', 'magneto', 'turret', 'shield'];
-        const icons = {
-            ghost: '👻',
-            timeWarp: '⏱️',
-            magneto: '🧲',
-            turret: '🔫',
-            shield: '🛡️'
-        };
 
         powerups.forEach(powerupType => {
             const currentLevel = this.powerupLevels[powerupType];
@@ -163,8 +157,9 @@ export class ShopSystem {
                 const cost = CONFIG.powerups.upgradeCosts[`level${nextLevel}`];
 
                 div.innerHTML = `
-                    <h3>${icons[powerupType]} ${powerupType.charAt(0).toUpperCase() + powerupType.slice(1)}</h3>
-                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">
+                    <div class="item-icon" style="--icon-color: ${ICONS[powerupType].color}">${iconSvg(powerupType)}</div>
+                    <h3>${ICONS[powerupType].label}</h3>
+                    <p class="desc">
                         Nivel ${currentLevel} → ${nextLevel}<br>
                         ${currentDuration}s → ${nextDuration}s
                     </p>
@@ -181,8 +176,9 @@ export class ShopSystem {
                 const duration = CONFIG.powerups.durations.level3[powerupType] / 1000;
 
                 div.innerHTML = `
-                    <h3>${icons[powerupType]} ${powerupType.charAt(0).toUpperCase() + powerupType.slice(1)}</h3>
-                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">
+                    <div class="item-icon" style="--icon-color: ${ICONS[powerupType].color}">${iconSvg(powerupType)}</div>
+                    <h3>${ICONS[powerupType].label}</h3>
+                    <p class="desc">
                         Nivel MAX<br>
                         Duración: ${duration}s
                     </p>
@@ -240,7 +236,7 @@ export class ShopSystem {
                 const canUpgrade = this.explosionBoostLevel < 3 && this.coins >= item.price;
                 div.innerHTML = `
                     <h3>${item.name}</h3>
-                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">${item.desc}</p>
+                    <p class="desc">${item.desc}</p>
                     <p class="price">${item.price} monedas</p>
                     <button ${!canUpgrade ? 'disabled' : ''} 
                             onclick="game.shopSystem.upgradeExplosionBoost() && game.shopSystem.renderShop() && game.updateUI()">
@@ -250,7 +246,7 @@ export class ShopSystem {
             } else {
                 div.innerHTML = `
                     <h3>${item.name}</h3>
-                    <p style="font-size: 0.85rem; margin: 0.5rem 0;">${item.desc}</p>
+                    <p class="desc">${item.desc}</p>
                     <p class="price">${item.price} monedas</p>
                     <button ${item.owned || this.coins < item.price ? 'disabled' : ''} 
                             onclick="game.shopSystem.buyUpgrade('${item.upgrade}', ${item.price}) && game.shopSystem.renderShop() && game.updateUI()">
@@ -289,12 +285,13 @@ export class ShopSystem {
             const owned = this.upgrades[id];
 
             const div = document.createElement('div');
-            div.className = 'shop-item' + (owned ? ' owned' : '');
-            div.style.borderColor = skinData.bodyColor;
+            div.className = 'shop-item skin-card' + (owned ? ' owned' : '');
+            div.style.setProperty('--skin-color', skinData.glowColor || skinData.bodyColor);
 
             div.innerHTML = `
-                <h3 style="color: ${skinData.bodyColor}">${skinData.name}</h3>
-                <p style="font-size: 0.85rem; margin: 0.5rem 0;">Skin exclusiva</p>
+                <canvas class="skin-thumb"></canvas>
+                <h3>${skinData.name}</h3>
+                <p class="desc">Skin exclusiva</p>
                 <p class="price">${price} monedas</p>
                 <button ${owned || this.coins < price ? 'disabled' : ''} 
                         onclick="game.shopSystem.buyUpgrade('${id}', ${price}) && game.shopSystem.renderShop()">
@@ -302,6 +299,7 @@ export class ShopSystem {
                 </button>
             `;
             container.appendChild(div);
+            this.skinSystem.drawThumb(div.querySelector('.skin-thumb'), id);
         });
     }
 

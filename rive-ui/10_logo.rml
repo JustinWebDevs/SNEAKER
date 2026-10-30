@@ -1,0 +1,152 @@
+<Rive version="1" kind="fragment">
+    <!-- Main-menu title: neon "SNEAKER" with a snake slithering along a wave under it. -->
+    <Artboard defaultStateMachineId="2:90" styleId="2:2" width="760" height="230" x="0" y="0" name="Logo" id="2:1">
+        <LayoutComponentStyle name="Logo Style" id="2:2"/>
+
+        <Node x="380" y="115" opacity="0" scaleX="0.6" scaleY="0.6" name="Title Group" id="2:10">
+            <Text x="0" y="-22" originX="0.5" originY="0.5" name="Title" id="2:11">
+                <TextStylePaint fontSize="118" letterSpacing="6" fontAssetId="1:1" familyName="Montserrat" styleName="Black" name="Title Style" id="2:12">
+                    <TextStyleAxis tag="2003265652" axisValue="900" name="Weight"/>
+                    <Fill fillRule="clockwise" name="Glow">
+                        <SolidColor colorValue="FF00E5FF" name="Glow Color" id="2:13"/>
+                        <Feather strength="22" name="Glow Feather"/>
+                    </Fill>
+                    <Fill name="Face">
+                        <LinearGradient startX="0" startY="0" endX="620" endY="0" name="Face Gradient">
+                            <GradientStop colorValue="FF7DF9FF" position="0"/>
+                            <GradientStop colorValue="FF00E5FF" position="0.45"/>
+                            <GradientStop colorValue="FFFF2BD6" position="1"/>
+                        </LinearGradient>
+                    </Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="2:12" text="SNEAKER" name="Title Run"/>
+            </Text>
+
+            <!-- the track the snake rides on -->
+            <Shape x="0" y="62" name="Wave Track">
+                <PointsPath name="Wave Path">
+                    <CubicMirroredVertex x="-300" y="0" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-225" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-150" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-75" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="0" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="75" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="150" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="225" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="300" y="0" rotation="0" distance="25"/>
+                </PointsPath>
+                <Stroke thickness="2" cap="round" name="Track Stroke">
+                    <SolidColor colorValue="3300E5FF" name="Track Color"/>
+                </Stroke>
+            </Shape>
+
+            <!-- the snake: same wave, trimmed to a short lit segment that travels -->
+            <Shape x="0" y="62" name="Wave Snake">
+                <PointsPath name="Snake Path">
+                    <CubicMirroredVertex x="-300" y="0" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-225" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-150" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="-75" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="0" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="75" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="150" y="12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="225" y="-12" rotation="0" distance="25"/>
+                    <CubicMirroredVertex x="300" y="0" rotation="0" distance="25"/>
+                </PointsPath>
+                <Stroke thickness="10" cap="round" name="Snake Glow">
+                    <SolidColor colorValue="FFFF2BD6" name="Snake Glow Color"/>
+                    <Feather strength="10" name="Snake Feather"/>
+                    <TargetEffect targetId="2:20" name="Use Slither"/>
+                </Stroke>
+                <Stroke thickness="5" cap="round" name="Snake Body">
+                    <LinearGradient startX="-300" startY="0" endX="300" endY="0" name="Snake Gradient">
+                        <GradientStop colorValue="FF00E5FF" position="0"/>
+                        <GradientStop colorValue="FFFF2BD6" position="1"/>
+                    </LinearGradient>
+                    <TargetEffect targetId="2:20" name="Use Slither"/>
+                </Stroke>
+            </Shape>
+        </Node>
+
+        <GroupEffect name="Slither" id="2:20">
+            <TrimPath start="0" end="0.22" offset="0" modeValue="sequential" name="Slither Trim" id="2:21"/>
+        </GroupEffect>
+
+        <LinearAnimation loopValue="oneShot" duration="54" name="Intro" id="2:30">
+            <KeyedObject objectId="2:10">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="22" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleX">
+                    <KeyFrameDouble value="0.6" frame="0" interpolationType="cubic">
+                        <CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/>
+                    </KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="54" interpolationType="linear"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleY">
+                    <KeyFrameDouble value="0.6" frame="0" interpolationType="cubic">
+                        <CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/>
+                    </KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="54" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <!-- neon tube flicker, a few quick dropouts per cycle -->
+        <LinearAnimation loopValue="loop" duration="240" name="Flicker" id="2:31">
+            <KeyedObject objectId="2:10">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleX">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty property="scaleY">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="2:13">
+                <KeyedProperty property="colorValue">
+                    <KeyFrameColor value="FF00E5FF" frame="0" interpolationType="hold"/>
+                    <KeyFrameColor value="3300E5FF" frame="150" interpolationType="hold"/>
+                    <KeyFrameColor value="FF00E5FF" frame="154" interpolationType="hold"/>
+                    <KeyFrameColor value="5500E5FF" frame="160" interpolationType="hold"/>
+                    <KeyFrameColor value="FF00E5FF" frame="163" interpolationType="hold"/>
+                    <KeyFrameColor value="FF00E5FF" frame="240" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation loopValue="loop" duration="150" name="Slither" id="2:32">
+            <KeyedObject objectId="2:21">
+                <KeyedProperty property="offset">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="150" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <StateMachine name="Logo SM" id="2:90">
+            <StateMachineLayer name="Title" id="2:91">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="600" y="-120"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="2:93"/>
+                </EntryState>
+                <AnimationState animationId="2:30" x="200" y="0" id="2:93">
+                    <StateTransition stateToId="2:94" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100"/>
+                </AnimationState>
+                <AnimationState animationId="2:31" x="400" y="0" id="2:94"/>
+            </StateMachineLayer>
+            <StateMachineLayer name="Snake" id="2:95">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="400" y="-120"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="2:96"/>
+                </EntryState>
+                <AnimationState animationId="2:32" x="200" y="0" id="2:96"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+</Rive>
